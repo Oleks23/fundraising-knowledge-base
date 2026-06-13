@@ -13,7 +13,6 @@ import argparse
 import csv
 import json
 import re
-from collections import defaultdict
 from dataclasses import dataclass
 from datetime import date, datetime, timedelta
 from pathlib import Path
@@ -22,13 +21,13 @@ from typing import Iterable
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_CONFIG_PATH = REPO_ROOT / "config" / "fcc_mapping_config.json"
+DEFAULT_OUTPUT_DIR = REPO_ROOT / "data" / "operational_overlay"
 DEFAULT_INPUT_DIRS = [
     REPO_ROOT / "data" / "source",
     REPO_ROOT / "data" / "renxt",
     REPO_ROOT / "data" / "synthetic",
     REPO_ROOT / "data" / "sample_source",
 ]
-DEFAULT_OUTPUT_DIR = REPO_ROOT / "data" / "operational_overlay"
 TODAY = date(2026, 6, 13)
 
 OUTPUT_FIELDS = {
@@ -146,9 +145,9 @@ def normalize_row(row: dict[str, str]) -> dict[str, str]:
 
 def first_present(row: dict[str, str], names: Iterable[str], default: str = "") -> str:
     for name in names:
-        normalized = normalize_header(name)
-        if row.get(normalized):
-            return row[normalized]
+        value = row.get(normalize_header(name), "")
+        if value:
+            return value
     return default
 
 
@@ -221,24 +220,20 @@ def read_csv(path: Path) -> list[dict[str, str]]:
 
 
 def discover_source_files(input_dir: Path) -> SourceData:
-    opportunities: list[dict[str, str]] = []
-    actions: list[dict[str, str]] = []
-    appeals: list[dict[str, str]] = []
-
+    source = SourceData(opportunities=[], actions=[], appeals=[])
     if not input_dir.exists():
-        return SourceData(opportunities=opportunities, actions=actions, appeals=appeals)
+        return source
 
     for path in sorted(input_dir.glob("*.csv")):
         name = path.name.lower()
         rows = read_csv(path)
         if "opportun" in name or "proposal" in name:
-            opportunities.extend(rows)
+            source.opportunities.extend(rows)
         elif "action" in name or "activity" in name or "task" in name:
-            actions.extend(rows)
+            source.actions.extend(rows)
         elif "appeal" in name or "campaign" in name:
-            appeals.extend(rows)
-
-    return SourceData(opportunities=opportunities, actions=actions, appeals=appeals)
+            source.appeals.extend(rows)
+    return source
 
 
 def fallback_source_data() -> SourceData:
@@ -301,6 +296,10 @@ def load_source_data(input_dir: Path) -> SourceData:
     return fallback_source_data()
 
 
+def initiatives_by_key(config: dict) -> dict[str, dict[str, str]]:
+    return {initiative["initiative_key"]: initiative for initiative in config.get("initiatives", [])}
+
+
 def match_initiative_key(row: dict[str, str], config: dict, source_type: str) -> str | None:
     fallback_key: str | None = None
     for initiative in config.get("initiatives", []):
@@ -313,12 +312,7 @@ def match_initiative_key(row: dict[str, str], config: dict, source_type: str) ->
         haystack = " ".join(row.get(field, "") for field in fields).lower()
         if needles and any(needle in haystack for needle in needles):
             return initiative["initiative_key"]
-
     return fallback_key
-
-
-def initiatives_by_key(config: dict) -> dict[str, dict[str, str]]:
-    return {initiative["initiative_key"]: initiative for initiative in config.get("initiatives", [])}
 
 
 def generate_programs(config: dict) -> list[dict[str, str]]:
@@ -326,31 +320,34 @@ def generate_programs(config: dict) -> list[dict[str, str]]:
 
 
 def generate_initiatives(source: SourceData, config: dict) -> list[dict[str, str]]:
-    initiatives = [initiative.copy() for initiative in config.get("initiatives", [])]
+    initiatives = []
+    for configured in config.get("initiatives", []):
+        row = configured.copy()
+        row.pop("initiative_key", None)
+        row.pop("source_match", None)
+        row.pop("fallback_for_unmatched_opportunities", None)
+        initiatives.append(row)
 
-    for initiative in initiatives:
-        initiative.pop("initiative_key", None)
-        initiative.pop("source_match", None)
-        initiative.pop("fallback_for_unmatched_opportunities", None)
-
+    configured_by_key = initiatives_by_key(config)
     for appeal in source.appeals:
         initiative_key = match_initiative_key(appeal, config, "appeal")
         if not initiative_key:
             continue
+        target_id = configured_by_key[initiative_key]["initiative_id"]
         for initiative in initiatives:
-            if initiative["initiative_id"] == initiatives_by_key(config)[initiative_key]["initiative_id"]:
-                goal = parse_amount(first_present(appeal, ["goal_amount", "goal", "target", "amount"]))
-                if goal:
-                    initiative["goal_amount"] = str(int(goal))
-                initiative["source_record_id"] = source_id(appeal, "APPEAL", 0)
-
+            if initiative["initiative_id"] != target_id:
+                continue
+            goal = parse_amount(first_present(appeal, ["goal_amount", "goal", "target", "amount"]))
+            if goal:
+                initiative["goal_amount"] = str(int(goal))
+            initiative["source_record_id"] = source_id(appeal, "APPEAL", 0)
     return initiatives
 
 
 def generate_commitments(source: SourceData, config: dict) -> list[dict[str, str]]:
     commitments: list[dict[str, str]] = []
-    mappings = config.get("source_mappings", {})
     initiative_lookup = initiatives_by_key(config)
+    mappings = config.get("source_mappings", {})
     high_value_amount = parse_amount(str(config.get("thresholds", {}).get("high_value_amount", 1000000)))
 
     opportunity_mapping = mappings.get("opportunities", {})
@@ -363,22 +360,16 @@ def generate_commitments(source: SourceData, config: dict) -> list[dict[str, str
             amount = parse_amount(first_present(row, ["amount", "ask_amount", "opportunity_amount", "expected_amount", "value"]))
             due = parse_date(first_present(row, ["expected_date", "ask_date", "proposal_due_date", "target_date", "close_date"]))
             status = first_present(row, ["status", "opportunity_status", "stage"], "Open")
-            completed = is_completed(status)
-            commitment_status = "Completed" if completed else "Overdue" if due and due < TODAY else "Open"
+            commitment_status = "Completed" if is_completed(status) else "Overdue" if due and due < TODAY else "Open"
             source_record_id = source_id(row, "OPP", index)
-            owner = owner_from(row, initiative.get("owner", "Development Officer"))
 
             commitments.append(
                 {
                     "commitment_id": f"COM-OPP-{slug(source_record_id)}",
-                    "commitment_name": first_present(
-                        row,
-                        ["opportunity_name", "name", "description"],
-                        "Advance mapped fundraising opportunity",
-                    ),
+                    "commitment_name": first_present(row, ["opportunity_name", "name", "description"], "Advance mapped fundraising opportunity"),
                     "initiative": initiative["initiative_id"],
                     "commitment_type": opportunity_mapping.get("commitment_type", "Proposal"),
-                    "owner": owner,
+                    "owner": owner_from(row, initiative.get("owner", "Development Officer")),
                     "due_date": format_date(due or TODAY + timedelta(days=14)),
                     "status": commitment_status,
                     "priority": "High" if amount >= high_value_amount else "Medium",
@@ -399,9 +390,8 @@ def generate_commitments(source: SourceData, config: dict) -> list[dict[str, str
             initiative = initiative_lookup[initiative_key]
             due = parse_date(first_present(row, ["due_date", "date", "action_date", "scheduled_date"]))
             completed = is_completed(first_present(row, ["status", "action_status", "completed"], ""))
-            action_type = first_present(row, ["action_type", "type", "category"], "Follow-Up")
             source_record_id = source_id(row, "ACT", index)
-            owner = owner_from(row, initiative.get("owner", "Development Officer"))
+            action_type = first_present(row, ["action_type", "type", "category"], "Follow-Up")
 
             commitments.append(
                 {
@@ -409,7 +399,7 @@ def generate_commitments(source: SourceData, config: dict) -> list[dict[str, str
                     "commitment_name": f"Complete {action_type.lower()} follow-up",
                     "initiative": initiative["initiative_id"],
                     "commitment_type": action_mapping.get("commitment_type", "Donor Follow-Up"),
-                    "owner": owner,
+                    "owner": owner_from(row, initiative.get("owner", "Development Officer")),
                     "due_date": format_date(due or TODAY + timedelta(days=7)),
                     "status": "Completed" if completed else "Overdue" if due and due < TODAY else "Open",
                     "priority": "Medium",
@@ -434,12 +424,8 @@ def generate_dependencies(config: dict) -> list[dict[str, str]]:
     return dependencies
 
 
-def generate_risks(source: SourceData, config: dict, commitments: list[dict[str, str]], dependencies: list[dict[str, str]]) -> list[dict[str, str]]:
+def generate_risks(commitments: list[dict[str, str]], dependencies: list[dict[str, str]]) -> list[dict[str, str]]:
     risks: list[dict[str, str]] = []
-    high_value_amount = parse_amount(str(config.get("thresholds", {}).get("high_value_amount", 1000000)))
-    stalled_days = int(config.get("thresholds", {}).get("stalled_activity_days", 90))
-    initiative_lookup = initiatives_by_key(config)
-
     for commitment in commitments:
         if commitment["status"] != "Overdue":
             continue
@@ -462,87 +448,26 @@ def generate_risks(source: SourceData, config: dict, commitments: list[dict[str,
         )
 
     for dependency in dependencies:
-        due = parse_date(dependency["due_date"])
-        if dependency["severity"] == "High" and dependency["status"] != "Resolved":
-            risks.append(
-                {
-                    "risk_id": f"RSK-{dependency['dependency_id']}",
-                    "risk_name": f"Blocked dependency: {dependency['dependency_name']}",
-                    "initiative": dependency["initiative"],
-                    "risk_type": "Dependency",
-                    "severity": "High",
-                    "likelihood": "High" if due and due < TODAY else "Medium",
-                    "status": "Open",
-                    "owner": dependency["owner"],
-                    "date_identified": format_date(TODAY),
-                    "target_resolution_date": format_date(TODAY + timedelta(days=10)),
-                    "source_system": "Power Automate",
-                    "source_record_id": dependency["dependency_id"],
-                    "mitigation_plan": "Escalate blocker and confirm an owner-backed resolution date.",
-                }
-            )
-
-    future_actions_by_opportunity = defaultdict(int)
-    completed_actions_by_opportunity: dict[str, date] = {}
-    for action in source.actions:
-        opportunity_id = first_present(action, ["opportunity_id", "opportunity_lookup_id", "linked_opportunity_id"])
-        due = parse_date(first_present(action, ["due_date", "date", "action_date", "scheduled_date"]))
-        completed_date = parse_date(first_present(action, ["completed_date", "date_completed", "completion_date"]))
-        if opportunity_id and due and due >= TODAY:
-            future_actions_by_opportunity[opportunity_id] += 1
-        if opportunity_id and completed_date:
-            previous = completed_actions_by_opportunity.get(opportunity_id)
-            completed_actions_by_opportunity[opportunity_id] = max(previous, completed_date) if previous else completed_date
-
-    for index, opportunity in enumerate(source.opportunities):
-        initiative_key = match_initiative_key(opportunity, config, "opportunity")
-        if not initiative_key:
+        if dependency["severity"] != "High" or dependency["status"] == "Resolved":
             continue
-        opportunity_id = source_id(opportunity, "OPP", index)
-        initiative = initiative_lookup[initiative_key]
-        amount = parse_amount(first_present(opportunity, ["amount", "ask_amount", "opportunity_amount", "expected_amount", "value"]))
-        owner = owner_from(opportunity, initiative.get("owner", "Development Officer"))
-        last_completed = completed_actions_by_opportunity.get(opportunity_id)
-        missing_next_action = future_actions_by_opportunity[opportunity_id] == 0
-        stalled = not last_completed or last_completed < TODAY - timedelta(days=stalled_days)
-
-        if missing_next_action:
-            risks.append(
-                {
-                    "risk_id": f"RSK-MISSING-NEXT-ACTION-{slug(opportunity_id)}",
-                    "risk_name": "Missing next action for active opportunity",
-                    "initiative": initiative["initiative_id"],
-                    "risk_type": "Follow-Up",
-                    "severity": "High" if amount >= high_value_amount else "Medium",
-                    "likelihood": "High",
-                    "status": "Open",
-                    "owner": owner,
-                    "date_identified": format_date(TODAY),
-                    "target_resolution_date": format_date(TODAY + timedelta(days=7)),
-                    "source_system": "RE NXT Actions",
-                    "source_record_id": opportunity_id,
-                    "mitigation_plan": "Create or confirm the next relationship action in RE NXT.",
-                }
-            )
-
-        if stalled and amount >= high_value_amount:
-            risks.append(
-                {
-                    "risk_id": f"RSK-STALLED-{slug(opportunity_id)}",
-                    "risk_name": "Stalled fundraising opportunity",
-                    "initiative": initiative["initiative_id"],
-                    "risk_type": "Pipeline",
-                    "severity": "High",
-                    "likelihood": "Medium",
-                    "status": "Open",
-                    "owner": owner,
-                    "date_identified": format_date(TODAY),
-                    "target_resolution_date": format_date(TODAY + timedelta(days=14)),
-                    "source_system": "RE NXT",
-                    "source_record_id": opportunity_id,
-                    "mitigation_plan": "Review opportunity strategy and confirm recent meaningful contact.",
-                }
-            )
+        due = parse_date(dependency["due_date"])
+        risks.append(
+            {
+                "risk_id": f"RSK-{dependency['dependency_id']}",
+                "risk_name": f"Blocked dependency: {dependency['dependency_name']}",
+                "initiative": dependency["initiative"],
+                "risk_type": "Dependency",
+                "severity": "High",
+                "likelihood": "High" if due and due < TODAY else "Medium",
+                "status": "Open",
+                "owner": dependency["owner"],
+                "date_identified": format_date(TODAY),
+                "target_resolution_date": format_date(TODAY + timedelta(days=10)),
+                "source_system": "Power Automate",
+                "source_record_id": dependency["dependency_id"],
+                "mitigation_plan": "Escalate blocker and confirm an owner-backed resolution date.",
+            }
+        )
 
     return dedupe_by_id(risks, "risk_id")
 
@@ -569,11 +494,11 @@ def generate_metric_snapshots(
     for initiative in initiatives:
         initiative_id = initiative["initiative_id"]
         initiative_commitments = [row for row in commitments if row["initiative"] == initiative_id]
-        initiative_dependencies = [row for row in dependencies if row["initiative"] == initiative_id and row["status"] != "Resolved"]
-        initiative_risks = [row for row in risks if row["initiative"] == initiative_id and row["status"] != "Resolved"]
-        overdue_commitments = [row for row in initiative_commitments if row["status"] == "Overdue"]
         open_commitments = [row for row in initiative_commitments if row["status"] != "Completed"]
-        high_risks = [row for row in initiative_risks if row["severity"] == "High"]
+        overdue_commitments = [row for row in initiative_commitments if row["status"] == "Overdue"]
+        open_dependencies = [row for row in dependencies if row["initiative"] == initiative_id and row["status"] != "Resolved"]
+        open_risks = [row for row in risks if row["initiative"] == initiative_id and row["status"] != "Resolved"]
+        high_risks = [row for row in open_risks if row["severity"] == "High"]
 
         metrics = [
             (
@@ -592,9 +517,9 @@ def generate_metric_snapshots(
             ),
             (
                 "open_dependencies_count",
-                str(len(initiative_dependencies)),
+                str(len(open_dependencies)),
                 "Count",
-                threshold_status_for_count(len(initiative_dependencies)),
+                threshold_status_for_count(len(open_dependencies)),
                 "Simple count of open FCC dependencies.",
             ),
             (
@@ -605,18 +530,32 @@ def generate_metric_snapshots(
                 "Simple count of open high-severity FCC risks.",
             ),
             (
-                "commitment_compliance_placeholder",
+                "commitment_compliance",
                 "",
                 "Percent",
                 "Not Evaluated",
-                "Placeholder/config_input only. No commitment compliance formula is calculated in Sprint 1.",
+                "Placeholder/config_input only. No weighted commitment compliance formula is calculated in the MVP overlay.",
             ),
             (
-                "follow_up_compliance_placeholder",
+                "follow_up_compliance",
                 "",
                 "Percent",
                 "Not Evaluated",
-                "Placeholder/config_input only. RE NXT Actions remain source activity data; no compliance formula is calculated in Sprint 1.",
+                "Placeholder/config_input only. RE NXT Actions remain source activity data; no compliance formula is calculated in the MVP overlay.",
+            ),
+            (
+                "readiness_score_placeholder",
+                initiative.get("readiness_score", ""),
+                "Score",
+                "Not Evaluated",
+                "Placeholder/config_input only. Imported Initiative score; no readiness formula is calculated.",
+            ),
+            (
+                "risk_score_placeholder",
+                initiative.get("risk_score", ""),
+                "Score",
+                "Not Evaluated",
+                "Placeholder/config_input only. Imported Initiative score; no risk formula is calculated.",
             ),
         ]
 
@@ -634,7 +573,6 @@ def generate_metric_snapshots(
                     "notes": notes,
                 }
             )
-
     return snapshots
 
 
@@ -660,7 +598,7 @@ def generate_overlay(input_dir: Path, output_dir: Path, config_path: Path) -> No
     initiatives = generate_initiatives(source, config)
     commitments = generate_commitments(source, config)
     dependencies = generate_dependencies(config)
-    risks = generate_risks(source, config, commitments, dependencies)
+    risks = generate_risks(commitments, dependencies)
     knowledge = generate_knowledge(config)
     metric_snapshots = generate_metric_snapshots(initiatives, commitments, dependencies, risks)
 
