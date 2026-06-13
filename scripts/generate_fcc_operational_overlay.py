@@ -3,12 +3,15 @@
 
 The generator intentionally does not create FCC-owned activity records. RE NXT
 Actions are consumed only as source data for commitments, risks, and metrics.
+Mapping assumptions are read from config/fcc_mapping_config.json so they remain
+explicit implementation choices rather than hidden canonical model rules.
 """
 
 from __future__ import annotations
 
 import argparse
 import csv
+import json
 import re
 from collections import defaultdict
 from dataclasses import dataclass
@@ -18,6 +21,7 @@ from typing import Iterable
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_CONFIG_PATH = REPO_ROOT / "config" / "fcc_mapping_config.json"
 DEFAULT_INPUT_DIRS = [
     REPO_ROOT / "data" / "source",
     REPO_ROOT / "data" / "renxt",
@@ -28,6 +32,17 @@ DEFAULT_OUTPUT_DIR = REPO_ROOT / "data" / "operational_overlay"
 TODAY = date(2026, 6, 13)
 
 OUTPUT_FIELDS = {
+    "programs.csv": [
+        "program_id",
+        "program_name",
+        "program_type",
+        "executive_owner",
+        "department",
+        "status",
+        "strategic_goal",
+        "start_date",
+        "end_date",
+    ],
     "initiatives.csv": [
         "initiative_id",
         "initiative_name",
@@ -108,40 +123,9 @@ OUTPUT_FIELDS = {
         "metric_value",
         "metric_unit",
         "threshold_status",
-        "source",
+        "source_system",
         "notes",
     ],
-}
-
-INITIATIVES = {
-    "annual_giving": {
-        "initiative_id": "INI-AG-SPRING",
-        "initiative_name": "Spring Appeal",
-        "program": "PRG-AG",
-        "initiative_type": "Appeal",
-        "owner": "Annual Giving Manager",
-        "department": "Annual Giving",
-        "status": "Active",
-        "start_date": "2026-03-01",
-        "target_date": "2026-06-30",
-        "goal_amount": "250000",
-        "source_system": "RE NXT",
-        "source_record_id": "APPEAL-2026-SPRING",
-    },
-    "major_gifts": {
-        "initiative_id": "INI-MG-PGP",
-        "initiative_name": "Principal Gifts Portfolio",
-        "program": "PRG-MG",
-        "initiative_type": "Portfolio",
-        "owner": "Principal Gifts Director",
-        "department": "Major Gifts",
-        "status": "Active",
-        "start_date": "2026-01-15",
-        "target_date": "2026-12-31",
-        "goal_amount": "5000000",
-        "source_system": "RE NXT",
-        "source_record_id": "PORTFOLIO-PRINCIPAL-2026",
-    },
 }
 
 
@@ -226,12 +210,9 @@ def is_completed(value: str) -> bool:
     return value.strip().lower() in {"complete", "completed", "closed", "done"}
 
 
-def classify_initiative(row: dict[str, str]) -> str:
-    text = " ".join(row.values()).lower()
-    amount = parse_amount(first_present(row, ["amount", "ask_amount", "opportunity_amount", "expected_amount", "value"]))
-    if "spring" in text or "annual" in text or "appeal" in text or amount < 100000:
-        return "annual_giving"
-    return "major_gifts"
+def load_mapping_config(path: Path) -> dict:
+    with path.open("r", encoding="utf-8") as handle:
+        return json.load(handle)
 
 
 def read_csv(path: Path) -> list[dict[str, str]]:
@@ -286,7 +267,7 @@ def fallback_source_data() -> SourceData:
             {
                 "action_id": "ACT-AG-2026-044",
                 "opportunity_id": "OPP-AG-2026-001",
-                "action_type": "Call",
+                "action_type": "Spring Appeal follow-up call",
                 "status": "Not Completed",
                 "owner": "Development Officer",
                 "due_date": "2026-06-10",
@@ -295,7 +276,7 @@ def fallback_source_data() -> SourceData:
             {
                 "action_id": "ACT-MG-2026-091",
                 "opportunity_id": "OPP-MG-2026-001",
-                "action_type": "Strategy Discussion",
+                "action_type": "Principal gift strategy discussion",
                 "status": "Open",
                 "owner": "Major Gifts Officer",
                 "due_date": "2026-06-17",
@@ -320,176 +301,144 @@ def load_source_data(input_dir: Path) -> SourceData:
     return fallback_source_data()
 
 
-def generate_initiatives(source: SourceData) -> list[dict[str, str]]:
-    initiatives = {key: value.copy() for key, value in INITIATIVES.items()}
+def match_initiative_key(row: dict[str, str], config: dict, source_type: str) -> str | None:
+    fallback_key: str | None = None
+    for initiative in config.get("initiatives", []):
+        if initiative.get("fallback_for_unmatched_opportunities") and source_type == "opportunity":
+            fallback_key = initiative["initiative_key"]
 
-    annual_goal = 0.0
+        match = initiative.get("source_match", {})
+        fields = [normalize_header(field) for field in match.get("fields", [])]
+        needles = [str(value).lower() for value in match.get("contains_any", [])]
+        haystack = " ".join(row.get(field, "") for field in fields).lower()
+        if needles and any(needle in haystack for needle in needles):
+            return initiative["initiative_key"]
+
+    return fallback_key
+
+
+def initiatives_by_key(config: dict) -> dict[str, dict[str, str]]:
+    return {initiative["initiative_key"]: initiative for initiative in config.get("initiatives", [])}
+
+
+def generate_programs(config: dict) -> list[dict[str, str]]:
+    return [program.copy() for program in config.get("programs", [])]
+
+
+def generate_initiatives(source: SourceData, config: dict) -> list[dict[str, str]]:
+    initiatives = [initiative.copy() for initiative in config.get("initiatives", [])]
+
+    for initiative in initiatives:
+        initiative.pop("initiative_key", None)
+        initiative.pop("source_match", None)
+        initiative.pop("fallback_for_unmatched_opportunities", None)
+
     for appeal in source.appeals:
-        text = " ".join(appeal.values()).lower()
-        if "spring" in text or "annual" in text:
-            annual_goal += parse_amount(first_present(appeal, ["goal_amount", "goal", "target", "amount"]))
-            appeal_id = source_id(appeal, "APPEAL", 0)
-            initiatives["annual_giving"]["source_record_id"] = appeal_id
+        initiative_key = match_initiative_key(appeal, config, "appeal")
+        if not initiative_key:
+            continue
+        for initiative in initiatives:
+            if initiative["initiative_id"] == initiatives_by_key(config)[initiative_key]["initiative_id"]:
+                goal = parse_amount(first_present(appeal, ["goal_amount", "goal", "target", "amount"]))
+                if goal:
+                    initiative["goal_amount"] = str(int(goal))
+                initiative["source_record_id"] = source_id(appeal, "APPEAL", 0)
 
-    if annual_goal > 0:
-        initiatives["annual_giving"]["goal_amount"] = str(int(annual_goal))
-
-    major_goal = sum(
-        parse_amount(first_present(row, ["amount", "ask_amount", "opportunity_amount", "expected_amount", "value"]))
-        for row in source.opportunities
-        if classify_initiative(row) == "major_gifts"
-    )
-    if major_goal > 0:
-        initiatives["major_gifts"]["goal_amount"] = str(int(major_goal))
-
-    return list(initiatives.values())
+    return initiatives
 
 
-def generate_commitments(source: SourceData) -> list[dict[str, str]]:
+def generate_commitments(source: SourceData, config: dict) -> list[dict[str, str]]:
     commitments: list[dict[str, str]] = []
+    mappings = config.get("source_mappings", {})
+    initiative_lookup = initiatives_by_key(config)
+    high_value_amount = parse_amount(str(config.get("thresholds", {}).get("high_value_amount", 1000000)))
 
-    for index, row in enumerate(source.opportunities):
-        initiative_key = classify_initiative(row)
-        initiative = INITIATIVES[initiative_key]["initiative_id"]
-        amount = parse_amount(first_present(row, ["amount", "ask_amount", "opportunity_amount", "expected_amount", "value"]))
-        due = parse_date(first_present(row, ["expected_date", "ask_date", "proposal_due_date", "target_date", "close_date"]))
-        status = first_present(row, ["status", "opportunity_status", "stage"], "Open")
-        completed = is_completed(status)
-        commitment_status = "Completed" if completed else "Overdue" if due and due < TODAY else "Open"
-        source_record_id = source_id(row, "OPP", index)
-        commitment_type = "Proposal" if amount >= 100000 else "Donor Follow-Up"
-        owner = owner_from(row, "Major Gifts Officer" if initiative_key == "major_gifts" else "Development Officer")
+    opportunity_mapping = mappings.get("opportunities", {})
+    if opportunity_mapping.get("enabled") and opportunity_mapping.get("create_commitments"):
+        for index, row in enumerate(source.opportunities):
+            initiative_key = match_initiative_key(row, config, "opportunity")
+            if not initiative_key:
+                continue
+            initiative = initiative_lookup[initiative_key]
+            amount = parse_amount(first_present(row, ["amount", "ask_amount", "opportunity_amount", "expected_amount", "value"]))
+            due = parse_date(first_present(row, ["expected_date", "ask_date", "proposal_due_date", "target_date", "close_date"]))
+            status = first_present(row, ["status", "opportunity_status", "stage"], "Open")
+            completed = is_completed(status)
+            commitment_status = "Completed" if completed else "Overdue" if due and due < TODAY else "Open"
+            source_record_id = source_id(row, "OPP", index)
+            owner = owner_from(row, initiative.get("owner", "Development Officer"))
 
-        commitments.append(
-            {
-                "commitment_id": f"COM-OPP-{slug(source_record_id)}",
-                "commitment_name": first_present(
-                    row,
-                    ["opportunity_name", "name", "description"],
-                    "Advance fundraising opportunity",
-                ),
-                "initiative": initiative,
-                "commitment_type": commitment_type,
-                "owner": owner,
-                "due_date": format_date(due or TODAY + timedelta(days=14)),
-                "status": commitment_status,
-                "priority": "High" if amount >= 1000000 else "Medium",
-                "value_amount": str(int(amount)) if amount else "0",
-                "source_system": "RE NXT",
-                "source_record_id": source_record_id,
-                "escalation_level": "Manager" if commitment_status == "Overdue" else "None",
-                "notes": "Generated from RE NXT-style opportunity source data.",
-            }
-        )
+            commitments.append(
+                {
+                    "commitment_id": f"COM-OPP-{slug(source_record_id)}",
+                    "commitment_name": first_present(
+                        row,
+                        ["opportunity_name", "name", "description"],
+                        "Advance mapped fundraising opportunity",
+                    ),
+                    "initiative": initiative["initiative_id"],
+                    "commitment_type": opportunity_mapping.get("commitment_type", "Proposal"),
+                    "owner": owner,
+                    "due_date": format_date(due or TODAY + timedelta(days=14)),
+                    "status": commitment_status,
+                    "priority": "High" if amount >= high_value_amount else "Medium",
+                    "value_amount": str(int(amount)) if amount else "0",
+                    "source_system": "RE NXT",
+                    "source_record_id": source_record_id,
+                    "escalation_level": "Manager" if commitment_status == "Overdue" else "None",
+                    "notes": "Generated from an explicit opportunity-to-commitment mapping in config/fcc_mapping_config.json.",
+                }
+            )
 
-    for index, row in enumerate(source.actions):
-        initiative_key = classify_initiative(row)
-        initiative = INITIATIVES[initiative_key]["initiative_id"]
-        due = parse_date(first_present(row, ["due_date", "date", "action_date", "scheduled_date"]))
-        completed = is_completed(first_present(row, ["status", "action_status", "completed"], ""))
-        action_type = first_present(row, ["action_type", "type", "category"], "Follow-Up")
-        source_record_id = source_id(row, "ACT", index)
-        owner = owner_from(row, "Major Gifts Officer" if initiative_key == "major_gifts" else "Development Officer")
+    action_mapping = mappings.get("actions", {})
+    if action_mapping.get("enabled") and action_mapping.get("create_follow_up_commitments"):
+        for index, row in enumerate(source.actions):
+            initiative_key = match_initiative_key(row, config, "action")
+            if not initiative_key:
+                continue
+            initiative = initiative_lookup[initiative_key]
+            due = parse_date(first_present(row, ["due_date", "date", "action_date", "scheduled_date"]))
+            completed = is_completed(first_present(row, ["status", "action_status", "completed"], ""))
+            action_type = first_present(row, ["action_type", "type", "category"], "Follow-Up")
+            source_record_id = source_id(row, "ACT", index)
+            owner = owner_from(row, initiative.get("owner", "Development Officer"))
 
-        commitments.append(
-            {
-                "commitment_id": f"COM-ACT-{slug(source_record_id)}",
-                "commitment_name": f"Complete {action_type.lower()} follow-up",
-                "initiative": initiative,
-                "commitment_type": "Donor Follow-Up",
-                "owner": owner,
-                "due_date": format_date(due or TODAY + timedelta(days=7)),
-                "status": "Completed" if completed else "Overdue" if due and due < TODAY else "Open",
-                "priority": "High" if initiative_key == "major_gifts" else "Medium",
-                "value_amount": "0",
-                "source_system": "RE NXT Actions",
-                "source_record_id": source_record_id,
-                "escalation_level": "Manager" if due and due < TODAY and not completed else "None",
-                "notes": "RE NXT Actions remain source data; FCC tracks the resulting commitment only.",
-            }
-        )
+            commitments.append(
+                {
+                    "commitment_id": f"COM-ACT-{slug(source_record_id)}",
+                    "commitment_name": f"Complete {action_type.lower()} follow-up",
+                    "initiative": initiative["initiative_id"],
+                    "commitment_type": action_mapping.get("commitment_type", "Donor Follow-Up"),
+                    "owner": owner,
+                    "due_date": format_date(due or TODAY + timedelta(days=7)),
+                    "status": "Completed" if completed else "Overdue" if due and due < TODAY else "Open",
+                    "priority": "Medium",
+                    "value_amount": "0",
+                    "source_system": "RE NXT Actions",
+                    "source_record_id": source_record_id,
+                    "escalation_level": "Manager" if due and due < TODAY and not completed else "None",
+                    "notes": "RE NXT Actions remain source activity data; FCC tracks the resulting commitment only.",
+                }
+            )
 
     return dedupe_by_id(commitments, "commitment_id")
 
 
-def generate_dependencies(source: SourceData) -> list[dict[str, str]]:
-    has_major = any(classify_initiative(row) == "major_gifts" for row in source.opportunities)
-    has_annual = bool(source.appeals) or any(classify_initiative(row) == "annual_giving" for row in source.opportunities + source.actions)
-
+def generate_dependencies(config: dict) -> list[dict[str, str]]:
     dependencies: list[dict[str, str]] = []
-    if has_annual:
-        dependencies.extend(
-            [
-                {
-                    "dependency_id": "DEP-AG-FINANCE-CODING",
-                    "dependency_name": "Finance coding approval for appeal response tracking",
-                    "initiative": "INI-AG-SPRING",
-                    "dependency_type": "Approval",
-                    "blocking_area": "Finance",
-                    "impacted_area": "Annual Giving",
-                    "owner": "Finance Business Partner",
-                    "due_date": format_date(TODAY - timedelta(days=6)),
-                    "status": "Open",
-                    "severity": "High",
-                    "impact_description": "Appeal response reporting cannot be finalized until coding is approved.",
-                    "resolution_notes": "",
-                },
-                {
-                    "dependency_id": "DEP-AG-CREATIVE-APPROVAL",
-                    "dependency_name": "Email creative final approval",
-                    "initiative": "INI-AG-SPRING",
-                    "dependency_type": "Review",
-                    "blocking_area": "Marketing",
-                    "impacted_area": "Annual Giving",
-                    "owner": "Marketing Lead",
-                    "due_date": format_date(TODAY + timedelta(days=1)),
-                    "status": "Open",
-                    "severity": "Medium",
-                    "impact_description": "Final email deployment is waiting for creative approval.",
-                    "resolution_notes": "",
-                },
-            ]
-        )
-
-    if has_major:
-        dependencies.extend(
-            [
-                {
-                    "dependency_id": "DEP-MG-RESEARCH-REFRESH",
-                    "dependency_name": "Prospect research refresh for principal gift briefing",
-                    "initiative": "INI-MG-PGP",
-                    "dependency_type": "Resource",
-                    "blocking_area": "Prospect Research",
-                    "impacted_area": "Major Gifts",
-                    "owner": "Prospect Research Manager",
-                    "due_date": format_date(TODAY - timedelta(days=8)),
-                    "status": "Open",
-                    "severity": "High",
-                    "impact_description": "Executive briefing is blocked until updated capacity and affinity notes are available.",
-                    "resolution_notes": "",
-                },
-                {
-                    "dependency_id": "DEP-MG-CASE-APPROVAL",
-                    "dependency_name": "Case for support approval",
-                    "initiative": "INI-MG-PGP",
-                    "dependency_type": "Approval",
-                    "blocking_area": "Leadership",
-                    "impacted_area": "Major Gifts",
-                    "owner": "VP Development",
-                    "due_date": format_date(TODAY + timedelta(days=7)),
-                    "status": "Open",
-                    "severity": "High",
-                    "impact_description": "Proposal development is blocked until leadership approves the case language.",
-                    "resolution_notes": "",
-                },
-            ]
-        )
-
+    for dependency in config.get("default_dependencies", []):
+        row = dependency.copy()
+        offset = int(row.pop("due_date_offset_days", 0))
+        row["due_date"] = format_date(TODAY + timedelta(days=offset))
+        dependencies.append(row)
     return dependencies
 
 
-def generate_risks(source: SourceData, commitments: list[dict[str, str]], dependencies: list[dict[str, str]]) -> list[dict[str, str]]:
+def generate_risks(source: SourceData, config: dict, commitments: list[dict[str, str]], dependencies: list[dict[str, str]]) -> list[dict[str, str]]:
     risks: list[dict[str, str]] = []
+    high_value_amount = parse_amount(str(config.get("thresholds", {}).get("high_value_amount", 1000000)))
+    stalled_days = int(config.get("thresholds", {}).get("stalled_activity_days", 90))
+    initiative_lookup = initiatives_by_key(config)
 
     for commitment in commitments:
         if commitment["status"] != "Overdue":
@@ -546,22 +495,25 @@ def generate_risks(source: SourceData, commitments: list[dict[str, str]], depend
             completed_actions_by_opportunity[opportunity_id] = max(previous, completed_date) if previous else completed_date
 
     for index, opportunity in enumerate(source.opportunities):
+        initiative_key = match_initiative_key(opportunity, config, "opportunity")
+        if not initiative_key:
+            continue
         opportunity_id = source_id(opportunity, "OPP", index)
-        initiative = INITIATIVES[classify_initiative(opportunity)]["initiative_id"]
+        initiative = initiative_lookup[initiative_key]
         amount = parse_amount(first_present(opportunity, ["amount", "ask_amount", "opportunity_amount", "expected_amount", "value"]))
-        owner = owner_from(opportunity, "Major Gifts Officer")
+        owner = owner_from(opportunity, initiative.get("owner", "Development Officer"))
         last_completed = completed_actions_by_opportunity.get(opportunity_id)
         missing_next_action = future_actions_by_opportunity[opportunity_id] == 0
-        stalled = not last_completed or last_completed < TODAY - timedelta(days=90)
+        stalled = not last_completed or last_completed < TODAY - timedelta(days=stalled_days)
 
         if missing_next_action:
             risks.append(
                 {
                     "risk_id": f"RSK-MISSING-NEXT-ACTION-{slug(opportunity_id)}",
                     "risk_name": "Missing next action for active opportunity",
-                    "initiative": initiative,
+                    "initiative": initiative["initiative_id"],
                     "risk_type": "Follow-Up",
-                    "severity": "High" if amount >= 1000000 else "Medium",
+                    "severity": "High" if amount >= high_value_amount else "Medium",
                     "likelihood": "High",
                     "status": "Open",
                     "owner": owner,
@@ -573,14 +525,14 @@ def generate_risks(source: SourceData, commitments: list[dict[str, str]], depend
                 }
             )
 
-        if stalled and amount >= 100000:
+        if stalled and amount >= high_value_amount:
             risks.append(
                 {
                     "risk_id": f"RSK-STALLED-{slug(opportunity_id)}",
                     "risk_name": "Stalled fundraising opportunity",
-                    "initiative": initiative,
+                    "initiative": initiative["initiative_id"],
                     "risk_type": "Pipeline",
-                    "severity": "High" if amount >= 1000000 else "Medium",
+                    "severity": "High",
                     "likelihood": "Medium",
                     "status": "Open",
                     "owner": owner,
@@ -595,42 +547,11 @@ def generate_risks(source: SourceData, commitments: list[dict[str, str]], depend
     return dedupe_by_id(risks, "risk_id")
 
 
-def generate_knowledge() -> list[dict[str, str]]:
-    return [
-        {
-            "knowledge_id": "KNW-AG-SPRING-SEGMENTATION-SOP",
-            "title": "Spring Appeal Segmentation SOP",
-            "knowledge_type": "SOP",
-            "initiative": "INI-AG-SPRING",
-            "owner": "Annual Giving Manager",
-            "status": "Approved",
-            "source_authority": "Official",
-            "review_date": "2026-09-30",
-            "document_link": "https://sharepoint.example.com/sites/fcc/knowledge/spring-appeal-segmentation-sop",
-            "tags": "annual-giving;segmentation;appeal",
-        },
-        {
-            "knowledge_id": "KNW-MG-BRIEFING-TEMPLATE",
-            "title": "Principal Gift Briefing Template",
-            "knowledge_type": "Template",
-            "initiative": "INI-MG-PGP",
-            "owner": "Principal Gifts Director",
-            "status": "Approved",
-            "source_authority": "Official",
-            "review_date": "2026-10-31",
-            "document_link": "https://sharepoint.example.com/sites/fcc/knowledge/principal-gift-briefing-template",
-            "tags": "major-gifts;briefing;template",
-        },
-    ]
+def generate_knowledge(config: dict) -> list[dict[str, str]]:
+    return [asset.copy() for asset in config.get("knowledge_assets", [])]
 
 
-def threshold_status(value: int, metric_name: str) -> str:
-    if metric_name == "Readiness Score":
-        if value < 65:
-            return "Critical"
-        if value < 80:
-            return "Warning"
-        return "Healthy"
+def threshold_status_for_count(value: int) -> str:
     if value >= 2:
         return "Critical"
     if value == 1:
@@ -651,37 +572,65 @@ def generate_metric_snapshots(
         initiative_dependencies = [row for row in dependencies if row["initiative"] == initiative_id and row["status"] != "Resolved"]
         initiative_risks = [row for row in risks if row["initiative"] == initiative_id and row["status"] != "Resolved"]
         overdue_commitments = [row for row in initiative_commitments if row["status"] == "Overdue"]
-        completed_commitments = [row for row in initiative_commitments if row["status"] == "Completed"]
-
-        readiness = max(
-            35,
-            90 - (len(overdue_commitments) * 8) - (len(initiative_dependencies) * 7) - (len([r for r in initiative_risks if r["severity"] == "High"]) * 10),
-        )
-        follow_up_total = len([row for row in initiative_commitments if row["commitment_type"] == "Donor Follow-Up"])
-        follow_up_completed = len(
-            [row for row in initiative_commitments if row["commitment_type"] == "Donor Follow-Up" and row["status"] == "Completed"]
-        )
-        follow_up_compliance = round((follow_up_completed / follow_up_total) * 100) if follow_up_total else 100
+        open_commitments = [row for row in initiative_commitments if row["status"] != "Completed"]
+        high_risks = [row for row in initiative_risks if row["severity"] == "High"]
 
         metrics = [
-            ("Readiness Score", readiness, "Score", f"Readiness generated from overdue commitments, open dependencies, and high risks for {initiative['initiative_name']}."),
-            ("Open Risks", len(initiative_risks), "Count", "Open risks generated by the FCC rules layer."),
-            ("Overdue Commitments", len(overdue_commitments), "Count", "Overdue commitments derived from FCC commitment due dates."),
-            ("Open Dependencies", len(initiative_dependencies), "Count", "Open blockers and prerequisites for the initiative."),
-            ("Follow-Up Compliance", follow_up_compliance, "Percent", "Uses RE NXT Actions only as source activity data."),
+            (
+                "open_commitments_count",
+                str(len(open_commitments)),
+                "Count",
+                threshold_status_for_count(len(open_commitments)),
+                "Simple count of FCC commitments that are not completed.",
+            ),
+            (
+                "overdue_commitments_count",
+                str(len(overdue_commitments)),
+                "Count",
+                threshold_status_for_count(len(overdue_commitments)),
+                "Simple count of FCC commitments with overdue status.",
+            ),
+            (
+                "open_dependencies_count",
+                str(len(initiative_dependencies)),
+                "Count",
+                threshold_status_for_count(len(initiative_dependencies)),
+                "Simple count of open FCC dependencies.",
+            ),
+            (
+                "high_risks_count",
+                str(len(high_risks)),
+                "Count",
+                threshold_status_for_count(len(high_risks)),
+                "Simple count of open high-severity FCC risks.",
+            ),
+            (
+                "commitment_compliance_placeholder",
+                "",
+                "Percent",
+                "Not Evaluated",
+                "Placeholder/config_input only. No commitment compliance formula is calculated in Sprint 1.",
+            ),
+            (
+                "follow_up_compliance_placeholder",
+                "",
+                "Percent",
+                "Not Evaluated",
+                "Placeholder/config_input only. RE NXT Actions remain source activity data; no compliance formula is calculated in Sprint 1.",
+            ),
         ]
 
-        for metric_name, metric_value, unit, notes in metrics:
+        for metric_name, metric_value, unit, threshold_status, notes in metrics:
             snapshots.append(
                 {
                     "snapshot_id": f"SNP-{slug(initiative_id)}-{slug(metric_name)}-{TODAY.isoformat()}",
                     "snapshot_date": format_date(TODAY),
                     "initiative": initiative_id,
                     "metric_name": metric_name,
-                    "metric_value": str(metric_value),
+                    "metric_value": metric_value,
                     "metric_unit": unit,
-                    "threshold_status": threshold_status(int(metric_value), metric_name),
-                    "source": "Power Automate",
+                    "threshold_status": threshold_status,
+                    "source_system": "Power Automate",
                     "notes": notes,
                 }
             )
@@ -704,16 +653,19 @@ def write_csv(path: Path, fields: list[str], rows: list[dict[str, str]]) -> None
         writer.writerows(rows)
 
 
-def generate_overlay(input_dir: Path, output_dir: Path) -> None:
+def generate_overlay(input_dir: Path, output_dir: Path, config_path: Path) -> None:
+    config = load_mapping_config(config_path)
     source = load_source_data(input_dir)
-    initiatives = generate_initiatives(source)
-    commitments = generate_commitments(source)
-    dependencies = generate_dependencies(source)
-    risks = generate_risks(source, commitments, dependencies)
-    knowledge = generate_knowledge()
+    programs = generate_programs(config)
+    initiatives = generate_initiatives(source, config)
+    commitments = generate_commitments(source, config)
+    dependencies = generate_dependencies(config)
+    risks = generate_risks(source, config, commitments, dependencies)
+    knowledge = generate_knowledge(config)
     metric_snapshots = generate_metric_snapshots(initiatives, commitments, dependencies, risks)
 
     outputs = {
+        "programs.csv": programs,
         "initiatives.csv": initiatives,
         "commitments.csv": commitments,
         "dependencies.csv": dependencies,
@@ -726,6 +678,7 @@ def generate_overlay(input_dir: Path, output_dir: Path) -> None:
         write_csv(output_dir / filename, OUTPUT_FIELDS[filename], rows)
 
     print(f"Generated FCC operational overlay in {output_dir}")
+    print(f"Mapping config: {config_path}")
     print(f"Source records: {len(source.opportunities)} opportunities, {len(source.actions)} RE NXT actions, {len(source.appeals)} appeals/campaigns")
     for filename, rows in outputs.items():
         print(f"- {filename}: {len(rows)} rows")
@@ -752,12 +705,18 @@ def parse_args() -> argparse.Namespace:
         default=DEFAULT_OUTPUT_DIR,
         help="Directory where FCC overlay CSVs will be written.",
     )
+    parser.add_argument(
+        "--mapping-config",
+        type=Path,
+        default=DEFAULT_CONFIG_PATH,
+        help="JSON file documenting FCC mapping assumptions.",
+    )
     return parser.parse_args()
 
 
 def main() -> int:
     args = parse_args()
-    generate_overlay(args.input_dir.resolve(), args.output_dir.resolve())
+    generate_overlay(args.input_dir.resolve(), args.output_dir.resolve(), args.mapping_config.resolve())
     return 0
 
 
