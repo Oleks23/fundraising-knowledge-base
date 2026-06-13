@@ -77,11 +77,11 @@ FCC is built around seven operational objects:
 ```text
 Programs
 Initiatives
-Activities
 Dependencies
 Commitments
 Risks
 Knowledge
+
 ```
 
 Supporting objects:
@@ -91,6 +91,9 @@ Metric Snapshots
 Configuration
 Alerts
 Data Quality Issues
+Source Activities
+Relationship Activities
+Operational Activities
 ```
 
 ---
