@@ -1,0 +1,5 @@
+knowledge_id,title,knowledge_type,initiative,owner,status,source_authority,review_date,document_link,tags
+KNW-AG-001,Spring Appeal Segmentation SOP,SOP,INI-AG-SPRING,Annual Giving Manager,Approved,Official,2026-09-30,https://sharepoint.example.com/sites/fcc/knowledge/spring-appeal-segmentation-sop,annual-giving;segmentation;appeal
+KNW-AG-002,Appeal Response Coding Guide,Playbook,INI-AG-SPRING,Finance Business Partner,Draft,Working,2026-07-15,https://sharepoint.example.com/sites/fcc/knowledge/appeal-response-coding-guide,finance;appeal;reporting
+KNW-MG-001,Principal Gift Briefing Template,Template,INI-MG-PGP,Principal Gifts Director,Approved,Official,2026-10-31,https://sharepoint.example.com/sites/fcc/knowledge/principal-gift-briefing-template,major-gifts;briefing;template
+KNW-MG-002,Case for Support Review Checklist,Checklist,INI-MG-PGP,VP Development,Approved,Approved,2026-08-31,https://sharepoint.example.com/sites/fcc/knowledge/case-for-support-review-checklist,case-for-support;approval;major-gifts
