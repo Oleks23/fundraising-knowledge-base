@@ -30,7 +30,7 @@ FCC is designed to answer:
 * What is blocked?
 * What requires intervention?
 
-within minutes.
+within five minutes of opening the Command Centre.
 
 ---
 
@@ -202,6 +202,8 @@ Sources:
 * Microsoft Project
 
 FCC consumes activity information but does not become the system of record for activities.
+
+Consistent with this, Activities are not a provisioned SharePoint List in the MVP (see "SharePoint Lists" below). The term "Activity" in this document refers to a concept in the work model, not an FCC-owned record.
 
 ---
 
@@ -469,5 +471,26 @@ within five minutes of opening the Executive Control Tower.
 * ROADMAP.md
 * RE_NXT_REFERENCE_IMPLEMENTATION.md
 * MVP_SCENARIO_VALIDATION.md
+
+/data
+
+* README.md
+* (synthetic datasets generated here)
+
+/scripts
+
+* README.md
+* generate_renxt_data_v4.py
+* (operational data generators)
+
+/powerbi
+
+* README.md
+* (Power Query / M, DAX, semantic model artifacts)
+
+/flows
+
+* README.md
+* (Power Automate flow specifications and definitions)
 
 This document serves as the authoritative project overview and should be reviewed before making architectural, implementation, or product decisions.
