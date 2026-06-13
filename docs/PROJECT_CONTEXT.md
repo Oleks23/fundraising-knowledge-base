@@ -16,6 +16,16 @@ FCC sits above these systems and provides a unified operational view of fundrais
 
 ---
 
+# Design Maturity
+
+This project is currently in the architecture and canonical-model phase.
+
+Many mappings, scoring models, and implementation details remain under development.
+
+Documents represent the current best design and should be expected to evolve through testing and pilot implementations.
+
+Open questions and assumptions should be documented rather than hidden.
+
 # Vision
 
 Most nonprofits have:
