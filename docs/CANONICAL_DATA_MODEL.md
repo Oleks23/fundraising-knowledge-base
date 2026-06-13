@@ -4,187 +4,173 @@
 
 ## Canonical Data Model
 
-Version: 1.0
+Version: 2.0
 
 ---
-# Warning
-
-The examples in this document illustrate the intent of the model.
-
-They are not implementation rules.
-
-Actual mappings between source systems and canonical objects must be documented in CRM_MAPPING_WORKBOOK.md and may vary by organization.
 
 # Purpose
 
 This document defines the canonical operational data model used by the Fundraising Command Centre (FCC).
 
-The canonical model is intentionally independent of:
+The model is intentionally independent of:
 
 * CRM systems
+* Fundraising platforms
 * Project management systems
 * Marketing platforms
-* Giving platforms
-* Analytics platforms
+* Reporting platforms
 
-All source systems are mapped into the canonical model through a separate Mapping Workbook.
-
-The canonical model is the foundation for:
+The Canonical Data Model serves as the foundation for:
 
 * SharePoint Lists
-* Power BI semantic model
-* Power Automate rules
-* AI summaries
-* Future API integrations
+* Power BI Semantic Model
+* Power Automate Rules
+* AI Summaries
+* Future Integrations
+
+---
+
+# Design Philosophy
+
+FCC is an operational intelligence platform.
+
+FCC is not:
+
+* a CRM
+* a project management system
+* a marketing platform
+* a fundraising platform
+
+FCC provides leadership visibility into execution, accountability, readiness, dependencies, risks, and organizational knowledge.
 
 ---
 
 # Critical Design Principle
 
-The canonical model is stable.
+The Canonical Model is stable.
 
-Source-system mappings are variable.
+Mappings are variable.
 
-There is no assumption that:
-
-```text
-CRM Object A
-=
-Canonical Object B
-```
-
-for every client.
-
-Different organizations use CRM objects differently.
+No source-system object has a guaranteed one-to-one relationship with a canonical FCC object.
 
 Examples:
 
-* RE NXT Opportunities may map to Commitments, Initiatives, or both.
-* Salesforce Campaigns may represent Appeals, Events, or entire Campaign Programs.
-* Planner Tasks may represent Activities or Readiness Items.
-* Stewardship Obligations may originate from CRM, Excel, or SharePoint.
+An RE NXT Opportunity may represent:
 
-All mappings must be explicitly documented.
+* a Commitment
+* an Initiative
+* both
+* neither
 
-The Mapping Workbook is therefore a required implementation artifact.
+depending on how the organization operates.
+
+All mappings must be documented through:
+
+CRM_MAPPING_WORKBOOK.md
 
 ---
 
-# Canonical Object Overview
+# Canonical Object Hierarchy
 
-FCC is built around seven operational objects:
+FCC is built around the following hierarchy:
 
 ```text
-Programs
-Initiatives
-Dependencies
-Commitments
-Risks
+Program
+    ↓
+Initiative
+```
+
+Supporting operational objects:
+
+```text
+Commitment
+Dependency
+Risk
 Knowledge
-
 ```
 
-Supporting objects:
+Supporting system objects:
 
 ```text
-Metric Snapshots
+Metric Snapshot
+Alert
 Configuration
-Alerts
-Data Quality Issues
-Source Activities
-Relationship Activities
-Operational Activities
+Data Quality Issue
 ```
 
 ---
-# Program / Initiative Hierarchy
 
-FCC supports a hierarchy:
-
-Program → Initiative → Activity
-
-## Program
-
-A Program is a higher-level fundraising area or campaign grouping.
-
-Examples:
-
-- Annual Giving
-- Major Gifts
-- Events
-- Corporate Giving
-- Stewardship
-- Capital Campaign
-- FY2027 Direct Marketing Campaign
-
-Programs are useful for executive grouping, portfolio reporting, and strategic oversight.
-
-## Initiative
-
-An Initiative is the actual managed work object.
-
-Examples:
-
-- Spring Appeal
-- Year-End Appeal
-- Annual Gala
-- Principal Gifts Portfolio
-- Monthly Donor Upgrade Campaign
-- Foundation Stewardship Reporting Cycle
-
-In many cases, the Initiative is the object that has readiness, commitments, dependencies, risks, and activities.
-
-## Activity
-
-An Activity is a specific unit of work required to execute the Initiative.
-
-Examples:
-
-- Approve segmentation
-- Finalize creative
-- Confirm finance coding
-- Conduct donor meeting
-- Prepare proposal
-- Deliver impact report
-
-## Important Mapping Note
-
-Source-system terms such as Campaign, Appeal, Fund, Opportunity, Portfolio, and Event should not be mapped mechanically.
-
-For example, in RE NXT:
-
-- Campaign may map to Program
-- Appeal may map to Initiative
-- Opportunity may map to Commitment or Initiative depending on client usage
-- Fund may map to Initiative Attribute or Financial Designation
-- Action may map to Activity
-
-Mappings must be confirmed in CRM_MAPPING_WORKBOOK.md.
-
-# 1. Initiative
+# Program
 
 ## Definition
 
-A managed fundraising work portfolio.
+A strategic fundraising area that groups related operational work.
 
-An Initiative represents a body of work that leadership wants to monitor and manage.
+Programs represent how leadership views fundraising operations.
 
-Initiatives contain Activities, Dependencies, Commitments, Risks, and Metrics.
+Programs are FCC-owned objects.
 
 ---
 
 ## Examples
 
-Direct Response
+* Annual Giving
+* Major Gifts
+* Stewardship
+* Events
+* Corporate Partnerships
+* Capital Campaign
+
+---
+
+## Purpose
+
+Programs provide:
+
+* strategic organization
+* executive reporting
+* ownership structure
+* portfolio grouping
+
+---
+
+## Required Attributes
+
+| Field           | Description            |
+| --------------- | ---------------------- |
+| Program ID      | Unique identifier      |
+| Program Name    | Program name           |
+| Program Type    | Category               |
+| Executive Owner | Senior leader          |
+| Department      | Responsible department |
+| Status          | Active / Inactive      |
+| Start Date      | Program start          |
+| End Date        | Program end            |
+
+---
+
+# Initiative
+
+## Definition
+
+A managed operational work portfolio within a Program.
+
+Initiatives are the primary unit of management within FCC.
+
+---
+
+## Examples
+
+Annual Giving
 
 * Spring Appeal
+* Giving Tuesday
 * Year-End Appeal
-* Monthly Giving Program
 
 Major Gifts
 
 * Principal Gifts Portfolio
-* Mid-Level Giving Program
+* Leadership Gifts Portfolio
 
 Events
 
@@ -193,180 +179,240 @@ Events
 
 Stewardship
 
-* Donor Reporting Program
-* Naming Recognition Program
-
-Campaigns
-
-* Capital Campaign
-* Campaign Quiet Phase
+* Impact Reporting Cycle
+* Donor Recognition Program
 
 ---
 
-## Required Fields
+## Purpose
 
-| Field           | Description                                 |
-| --------------- | ------------------------------------------- |
-| Initiative ID   | Unique identifier                           |
-| Title           | Initiative name                             |
-| Type            | Campaign, Appeal, Event, Portfolio, Program |
-| Status          | Planning, Active, Completed, On Hold        |
-| Owner           | Responsible person                          |
-| Department      | Primary department                          |
-| Start Date      | Start date                                  |
-| Target Date     | Target completion date                      |
-| Readiness Score | Calculated                                  |
-| Risk Score      | Calculated                                  |
+Initiatives provide:
+
+* operational accountability
+* readiness tracking
+* risk management
+* commitment management
 
 ---
 
-# 2. Activity
+## Required Attributes
+
+| Field           | Description                             |
+| --------------- | --------------------------------------- |
+| Initiative ID   | Unique identifier                       |
+| Initiative Name | Initiative title                        |
+| Program ID      | Parent Program                          |
+| Initiative Type | Portfolio, Appeal, Event, Program Cycle |
+| Owner           | Responsible individual                  |
+| Status          | Active, Complete, On Hold               |
+| Start Date      | Initiative start                        |
+| Target Date     | Initiative target date                  |
+| Readiness Score | Calculated metric                       |
+| Risk Score      | Calculated metric                       |
+
+---
+
+# Activity Strategy
+
+Activities are intentionally not FCC-owned objects.
+
+Activities remain within their source systems.
+
+FCC consumes activity information but does not become the system of record for activity management.
+
+---
+
+## Relationship Activities
+
+Examples:
+
+* donor meetings
+* qualification calls
+* stewardship visits
+* proposal discussions
+* follow-up calls
+
+Typical Sources:
+
+* RE NXT Actions
+* Salesforce Tasks
+
+---
+
+## Operational Activities
+
+Examples:
+
+* segmentation approval
+* venue booking
+* creative review
+* website deployment
+* sponsorship package review
+
+Typical Sources:
+
+* Planner
+* Asana
+* Smartsheet
+* Microsoft Project
+
+---
+
+## FCC Use of Activities
+
+Activities may contribute to:
+
+* readiness calculations
+* commitment monitoring
+* follow-up compliance
+* dependency detection
+* risk generation
+
+Activities are considered source data rather than FCC-managed records.
+
+---
+
+# Commitment
 
 ## Definition
 
-A unit of work required to advance an Initiative.
+A commitment represents an obligation that must be fulfilled.
 
-Activities are actionable items.
+Commitments are one of the primary accountability objects within FCC.
 
 ---
 
 ## Examples
 
-* Secure lead sponsor
-* Create case for support
-* Approve segmentation
-* Conduct donor meeting
-* Draft proposal
-* Review stewardship report
+* donor follow-up
+* proposal due
+* stewardship report
+* campaign launch milestone
+* sponsor benefit delivery
+* executive briefing
 
 ---
 
-## Required Fields
+## Purpose
 
-| Field            | Description                                 |
-| ---------------- | ------------------------------------------- |
-| Activity ID      | Unique identifier                           |
-| Initiative ID    | Parent initiative                           |
-| Title            | Activity name                               |
-| Description      | Activity description                        |
-| Owner            | Responsible individual                      |
-| Status           | Not Started, In Progress, Complete, Blocked |
-| Priority         | Low, Medium, High                           |
-| Due Date         | Required completion date                    |
-| Source System    | Originating system                          |
-| Source Record ID | External identifier                         |
+Commitments allow leadership to monitor:
+
+* accountability
+* overdue work
+* execution discipline
+* operational readiness
 
 ---
 
-# 3. Dependency
+## Required Attributes
+
+| Field            | Description             |
+| ---------------- | ----------------------- |
+| Commitment ID    | Unique identifier       |
+| Initiative ID    | Related Initiative      |
+| Commitment Type  | Category                |
+| Owner            | Responsible individual  |
+| Due Date         | Commitment due date     |
+| Status           | Open, Complete, Overdue |
+| Priority         | Priority level          |
+| Source System    | Originating system      |
+| Source Record ID | Reference identifier    |
+
+---
+
+# Dependency
 
 ## Definition
 
-A relationship where completion of one activity depends upon another activity, decision, deliverable, approval, or external event.
+A dependency is a prerequisite that must be completed before another activity, commitment, or initiative can proceed.
 
-Dependencies are a major differentiator of FCC.
+Dependencies are a key differentiator of FCC.
 
 ---
 
 ## Examples
 
-* Finance approval required before launch
-* Legal review required before sponsorship package
-* Website deployment required before campaign launch
-* Research profile required before solicitation
+* finance approval
+* legal review
+* CEO briefing
+* website deployment
+* prospect research completion
 
 ---
 
-## Required Fields
+## Purpose
 
-| Field         | Description                    |
-| ------------- | ------------------------------ |
-| Dependency ID | Unique identifier              |
-| Initiative ID | Related initiative             |
-| Blocking Item | What is causing the dependency |
-| Impacted Item | What is blocked                |
-| Owner         | Resolution owner               |
-| Due Date      | Required resolution date       |
-| Status        | Open, Resolved                 |
-| Severity      | Low, Medium, High              |
+Dependencies allow leadership to identify:
+
+* bottlenecks
+* blockers
+* approval delays
+* execution risks
 
 ---
 
-# 4. Commitment
+## Required Attributes
 
-## Definition
-
-An obligation that must be fulfilled.
-
-Commitments are accountability objects.
-
----
-
-## Examples
-
-* Donor follow-up due
-* Stewardship report due
-* Proposal submission deadline
-* Sponsorship benefit delivery
-* Campaign launch milestone
+| Field              | Description              |
+| ------------------ | ------------------------ |
+| Dependency ID      | Unique identifier        |
+| Initiative ID      | Related Initiative       |
+| Dependency Type    | Category                 |
+| Owner              | Responsible individual   |
+| Due Date           | Required completion date |
+| Status             | Open, Resolved           |
+| Severity           | Low, Medium, High        |
+| Impact Description | Description of impact    |
 
 ---
 
-## Required Fields
-
-| Field            | Description                             |
-| ---------------- | --------------------------------------- |
-| Commitment ID    | Unique identifier                       |
-| Initiative ID    | Related initiative                      |
-| Title            | Commitment description                  |
-| Owner            | Responsible person                      |
-| Due Date         | Due date                                |
-| Status           | Open, Completed, Overdue                |
-| Commitment Type  | Donor, Stewardship, Operational, Vendor |
-| Escalation Level | None, Manager, Director                 |
-
----
-
-# 5. Risk
+# Risk
 
 ## Definition
 
 A condition that threatens successful execution.
 
-Risks can be operational, financial, data-related, staffing-related, or fundraising-related.
+Risks may be manually entered or system generated.
 
 ---
 
 ## Examples
 
-* Stalled prospect pipeline
-* Missing readiness items
-* Data quality issue
-* Resource shortage
-* Delayed approval
+* stalled opportunity
+* overdue commitment
+* missing approval
+* low readiness score
+* resource shortage
+* data quality issue
 
 ---
 
-## Required Fields
+## Purpose
 
-| Field         | Description                            |
-| ------------- | -------------------------------------- |
-| Risk ID       | Unique identifier                      |
-| Initiative ID | Related initiative                     |
-| Risk Type     | Operational, Data, Financial, Staffing |
-| Description   | Risk description                       |
-| Severity      | Low, Medium, High                      |
-| Likelihood    | Low, Medium, High                      |
-| Status        | Open, Monitoring, Resolved             |
-| Owner         | Risk owner                             |
+Risks allow leadership to focus attention where intervention is required.
 
 ---
 
-# 6. Knowledge
+## Required Attributes
+
+| Field           | Description                |
+| --------------- | -------------------------- |
+| Risk ID         | Unique identifier          |
+| Initiative ID   | Related Initiative         |
+| Risk Type       | Category                   |
+| Severity        | Low, Medium, High          |
+| Likelihood      | Low, Medium, High          |
+| Status          | Open, Monitoring, Resolved |
+| Owner           | Responsible individual     |
+| Mitigation Plan | Resolution approach        |
+
+---
+
+# Knowledge
 
 ## Definition
 
-Institutional knowledge supporting fundraising operations.
+Institutional knowledge required to support fundraising operations.
 
 Knowledge assets preserve organizational memory.
 
@@ -374,28 +420,38 @@ Knowledge assets preserve organizational memory.
 
 ## Examples
 
-* SOP
-* Playbook
-* Policy
-* Template
-* Decision Log
+* SOPs
+* Policies
+* Playbooks
+* Templates
 * Lessons Learned
-* Post-Mortem
+* Decision Logs
+* Post-Mortems
 
 ---
 
-## Required Fields
+## Purpose
 
-| Field            | Description                     |
-| ---------------- | ------------------------------- |
-| Knowledge ID     | Unique identifier               |
-| Title            | Asset title                     |
-| Type             | SOP, Policy, Template, Playbook |
-| Module           | Related operational area        |
-| Owner            | Document owner                  |
-| Review Date      | Next review                     |
-| Status           | Draft, Approved, Archived       |
-| Source Authority | Working, Approved, Official     |
+Knowledge supports:
+
+* onboarding
+* consistency
+* compliance
+* organizational learning
+
+---
+
+## Required Attributes
+
+| Field            | Description                 |
+| ---------------- | --------------------------- |
+| Knowledge ID     | Unique identifier           |
+| Title            | Asset title                 |
+| Type             | SOP, Policy, Template, etc. |
+| Owner            | Responsible individual      |
+| Status           | Draft, Approved, Archived   |
+| Review Date      | Next review date            |
+| Source Authority | Working, Approved, Official |
 
 ---
 
@@ -403,45 +459,31 @@ Knowledge assets preserve organizational memory.
 
 ## Metric Snapshot
 
-Stores periodic calculated metrics.
+Stores historical operational metrics.
 
 Examples:
 
 * Readiness Score
-* Pipeline Coverage
-* Stalled Prospect Count
 * Follow-Up Compliance
-* Open Dependencies
 * Open Risks
+* Open Commitments
+* Dependency Count
+* Pipeline Coverage
 
-Metric Snapshots are the preferred AI input.
-
----
-
-## Data Quality Issue
-
-Tracks data problems detected during ingestion.
-
-Examples:
-
-* Missing next action
-* Missing owner
-* Missing stage
-* Invalid date
-* Duplicate record
+Metric Snapshots are preferred inputs for Power BI and AI summaries.
 
 ---
 
 ## Alert
 
-Tracks operational notifications.
+Stores generated operational notifications.
 
 Examples:
 
-* Overdue commitment
-* Stalled prospect
-* High-risk dependency
-* Readiness decline
+* overdue commitment
+* stalled prospect
+* readiness decline
+* critical dependency
 
 ---
 
@@ -451,29 +493,66 @@ Stores client-specific settings.
 
 Examples:
 
-* Readiness scoring weights
 * SLA thresholds
-* Risk thresholds
-* Escalation rules
-* Department list
+* readiness weights
+* escalation rules
+* scoring formulas
 
 ---
 
-# Mapping Principles
+## Data Quality Issue
 
-The canonical model is not a CRM model.
+Stores identified data quality concerns.
 
-The canonical model is not a project management model.
+Examples:
 
-The canonical model is an operational execution model.
+* missing owner
+* missing due date
+* duplicate record
+* missing next action
 
-All CRM, project management, marketing, and giving systems are translated into this model through implementation-specific mappings.
+---
 
-Mappings must be documented separately within:
+# Object Relationships
 
-CRM_MAPPING_WORKBOOK.md
+```text
+Program
+    ↓
+Initiative
 
-No implementation may assume that a source-system object always maps to the same canonical object.
+Initiative
+    ↓
+Commitments
 
-Mappings must be reviewed and approved during implementation.
+Initiative
+    ↓
+Dependencies
 
+Initiative
+    ↓
+Risks
+
+Initiative
+    ↓
+Knowledge
+
+Initiative
+    ↓
+Metric Snapshots
+```
+
+Activities remain outside FCC and feed operational intelligence through source-system integrations.
+
+---
+
+# Design Success Criteria
+
+The Canonical Model succeeds when:
+
+* it supports multiple fundraising disciplines
+* it does not require separate architectures for different teams
+* it supports both relationship-based and project-based fundraising work
+* it remains independent of specific CRM implementations
+* it provides a stable foundation for Power BI, Power Automate, AI, and future integrations
+
+The Canonical Model is intended to be the long-term foundation of the Fundraising Command Centre platform.
