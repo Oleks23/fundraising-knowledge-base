@@ -15,6 +15,8 @@ The measures are defined in `core_measures.dax` and assume the Sprint 2 base tab
 
 No Activities measures are included. Activities remain in source systems and may only feed derived FCC objects or staging processes later.
 
+Metric Snapshot rollup behavior is defined in `docs/METRIC_SNAPSHOT_ROLLUP_RULES.md`.
+
 ---
 
 ## Measure Groups
@@ -62,18 +64,25 @@ Included measures:
 
 ### Metric Snapshots
 
-Metric Snapshot measures read imported historical metric rows.
+Metric Snapshot measures read imported historical metric rows and apply metric-specific rollup rules.
 
 Included measures:
 
 - `Latest Snapshot Date`
-- `Latest Metric Value`
-- `Follow-Up Compliance Latest`
-- `Commitment Compliance Latest`
-- `Open Risks Latest`
 - `Open Commitments Latest`
+- `Overdue Commitments Latest`
+- `Open Dependencies Latest`
+- `High Risks Latest`
+- `Follow-Up Compliance Placeholder Latest`
+- `Commitment Compliance Placeholder Latest`
+- `Readiness Score Placeholder Latest`
+- `Risk Score Placeholder Latest`
 
-These measures do not calculate readiness or compliance. They return the latest imported metric value for the relevant `metric_name` in the current filter context.
+Count metrics sum `metric_value` across visible Initiatives at the latest snapshot date in the current filter context.
+
+Compliance metrics use a simple average as an MVP placeholder. This should be replaced by weighted average once numerator and denominator fields are available in the snapshot feed.
+
+Score placeholder metrics return values only at Initiative grain. Program-level and Executive-level score cards should remain blank unless an explicit higher-level MetricSnapshot is supplied by an approved scoring process.
 
 ### Initiatives
 
@@ -86,7 +95,7 @@ Included measures:
 - `Average Readiness Score`
 - `Average Risk Score`
 
-`readiness_score` and `risk_score` are treated as imported inputs only. No readiness scoring formula is implemented in DAX.
+`readiness_score` and `risk_score` are treated as imported inputs only. No readiness or risk scoring formula is implemented in DAX.
 
 ---
 
@@ -104,8 +113,8 @@ Included measures:
 ## Known MVP Limitations
 
 - Measures are written against base Sprint 2 tables, not future surrogate-key dimensions.
-- `Latest Metric Value` is context-sensitive. It works best when a metric name is selected in the report context.
-- Current sample snapshot data includes `high_risks_count`, but not `open_risks_count`; `Open Risks Latest` will return blank until `open_risks_count` is provided by the snapshot feed.
-- Compliance measures read placeholder/config-input snapshot rows when present. They do not calculate compliance from raw activities or commitments.
+- Metric Snapshot measures assume each metric has one latest date in the current filter context.
+- Compliance measures are placeholder averages until weighted numerator/denominator inputs are added.
 - Readiness weights are documented in the rules layer, but per-module scoring is deferred. DAX does not hardcode readiness weighting or module scoring.
+- Program-level and Executive-level score snapshots require explicit approved source rows in a future snapshot design.
 - No Activities measures, Activities table, or source-task reporting logic is included in the core model.
