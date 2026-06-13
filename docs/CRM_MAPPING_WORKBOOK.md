@@ -18,7 +18,6 @@ The purpose is to identify:
 
 * Programs
 * Initiatives
-* Activities
 * Dependencies
 * Commitments
 * Risks
@@ -207,6 +206,100 @@ Examples
 * Leadership Gifts
 
 ---
+
+# Source Activity Assessment
+
+Activities are not treated as FCC-owned core objects.
+
+Activities usually remain in their source systems, such as:
+
+- RE NXT Actions
+- Salesforce Tasks
+- Planner Tasks
+- Asana Tasks
+- Smartsheet Tasks
+- Microsoft Project tasks
+
+FCC consumes activity data to evaluate execution, follow-up discipline, readiness, dependencies, and risk.
+
+## Activity Types
+
+### Relationship Activities
+
+Examples:
+
+- Donor meeting
+- Qualification call
+- Proposal discussion
+- Stewardship visit
+- Follow-up call
+
+Typical sources:
+
+- RE NXT Actions
+- Salesforce Tasks
+
+### Operational Activities
+
+Examples:
+
+- Approve segmentation
+- Confirm finance coding
+- Finalize creative
+- Test donation page
+- Secure venue
+- Approve sponsorship package
+
+Typical sources:
+
+- Planner
+- Asana
+- Smartsheet
+- Microsoft Project
+- Excel
+
+## Assessment Questions
+
+- Which systems currently manage activities?
+- Are activities consistently recorded?
+- Are due dates reliable?
+- Are owners reliable?
+- Are completed dates reliable?
+- Are activity statuses reliable?
+- Can activities be linked to a Program or Initiative?
+- Can activities be used for follow-up compliance?
+- Can activities be used for readiness scoring?
+- Can activities be used to generate risks?
+- What activity data should remain read-only?
+- What activity data should be summarized into FCC metrics?
+
+## Mapping Guidance
+
+Activities should not normally be recreated as FCC-owned records.
+
+Instead:
+
+- Relationship activities remain in CRM.
+- Operational activities remain in planning tools.
+- FCC imports or references activity data.
+- FCC creates metrics, alerts, risks, and summaries from activity data.
+
+## Example
+
+RE NXT Action:
+
+- Action Type: Call
+- Constituent: Donor A
+- Assigned Solicitor: Sarah Mitchell
+- Due Date: 2026-07-15
+- Status: Not Completed
+
+FCC interpretation:
+
+- Source Activity
+- Used for follow-up compliance
+- May generate an overdue commitment alert
+- May contribute to a stalled prospect risk
 
 # Commitment Mapping
 
