@@ -1,0 +1,11 @@
+config_id,config_area,config_name,config_value,effective_date,status,notes
+CFG-SLA-001,Follow-Up SLA,Standard Follow-Up Days,14,2026-01-01,Active,Used to identify missing or overdue donor follow-up from RE NXT Actions.
+CFG-SLA-002,High Value Follow-Up SLA,High Value Follow-Up Days,7,2026-01-01,Active,Applies to major gift and principal gift opportunities above configured value thresholds.
+CFG-RISK-001,Risk Thresholds,High Value Opportunity Threshold,1000000,2026-01-01,Active,Used by high value inactivity and principal gift risk rules.
+CFG-READY-001,Readiness Weights,Prospect Coverage,40,2026-01-01,Active,Canonical readiness weight stored as configurable value.
+CFG-READY-002,Readiness Weights,Case for Support,20,2026-01-01,Active,Canonical readiness weight stored as configurable value.
+CFG-READY-003,Readiness Weights,Finance Setup,15,2026-01-01,Active,Canonical readiness weight stored as configurable value.
+CFG-READY-004,Readiness Weights,Marketing Assets,15,2026-01-01,Active,Canonical readiness weight stored as configurable value.
+CFG-READY-005,Readiness Weights,Stewardship Plan,10,2026-01-01,Active,Canonical readiness weight stored as configurable value.
+CFG-ESC-001,Escalation Rules,Manager Escalation Delay Days,3,2026-01-01,Active,Escalate overdue commitments to manager after configured delay.
+CFG-ESC-002,Escalation Rules,Director Escalation Delay Days,7,2026-01-01,Active,Escalate critical unresolved risks to director after configured delay.
