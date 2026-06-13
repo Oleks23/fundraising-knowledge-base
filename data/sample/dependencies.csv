@@ -1,0 +1,5 @@
+dependency_id,dependency_name,initiative,dependency_type,blocking_area,impacted_area,owner,due_date,status,severity,impact_description,resolution_notes
+DEP-AG-001,Finance coding approval for appeal response tracking,INI-AG-SPRING,Approval,Finance,Annual Giving,Finance Business Partner,2026-06-07,Open,High,Appeal response reporting cannot be finalized until coding is approved,
+DEP-AG-002,Email creative final approval,INI-AG-SPRING,Review,Marketing,Annual Giving,Marketing Lead,2026-06-14,Open,Medium,Final email deployment is waiting for creative approval,
+DEP-MG-001,Prospect research refresh for principal gift briefing,INI-MG-PGP,Resource,Prospect Research,Major Gifts,Prospect Research Manager,2026-06-05,Open,High,Executive briefing is blocked until updated capacity and affinity notes are available,
+DEP-MG-002,Case for support approval,INI-MG-PGP,Approval,Leadership,Major Gifts,VP Development,2026-06-20,Open,High,Proposal development is blocked until leadership approves the case language,
