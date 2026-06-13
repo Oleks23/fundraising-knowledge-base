@@ -1,9 +1,13 @@
-snapshot_id,snapshot_date,initiative,metric_name,metric_value,metric_unit,threshold_status,source,notes
-SNP-AG-2026-06-07-READINESS,2026-06-07,INI-AG-SPRING,Readiness Score,76,Score,Warning,Power Automate,Readiness declined after finance coding dependency remained open.
-SNP-AG-2026-06-14-READINESS,2026-06-14,INI-AG-SPRING,Readiness Score,72,Score,Warning,Power Automate,Creative approval and overdue segmentation commitment continue to affect readiness.
-SNP-AG-2026-06-14-OPEN-RISKS,2026-06-14,INI-AG-SPRING,Open Risks,2,Count,Warning,Power Automate,Includes launch readiness and follow-up risks.
-SNP-AG-2026-06-14-FOLLOWUP,2026-06-14,INI-AG-SPRING,Follow-Up Compliance,82,Percent,Warning,Power Automate,Compliance reflects overdue RE NXT Actions follow-up batch.
-SNP-MG-2026-06-07-READINESS,2026-06-07,INI-MG-PGP,Readiness Score,64,Score,Critical,Power Automate,Prospect research refresh and briefing package dependency remain open.
-SNP-MG-2026-06-14-READINESS,2026-06-14,INI-MG-PGP,Readiness Score,61,Score,Critical,Power Automate,Readiness declined due to unresolved high-severity dependencies.
-SNP-MG-2026-06-14-OPEN-RISKS,2026-06-14,INI-MG-PGP,Open Risks,2,Count,Critical,Power Automate,Principal gift portfolio has two high operational risks.
-SNP-MG-2026-06-14-DEPENDENCIES,2026-06-14,INI-MG-PGP,Open Dependencies,2,Count,Critical,Power Automate,Both open dependencies are high severity.
+snapshot_id,snapshot_date,initiative,metric_name,metric_value,metric_unit,threshold_status,source_system,notes
+SNP-AG-2026-06-14-OPEN-COMMITMENTS,2026-06-14,INI-AG-SPRING,open_commitments_count,3,Count,Critical,Power Automate,Simple count of FCC commitments that are not completed.
+SNP-AG-2026-06-14-OVERDUE-COMMITMENTS,2026-06-14,INI-AG-SPRING,overdue_commitments_count,2,Count,Critical,Power Automate,Simple count of FCC commitments with overdue status.
+SNP-AG-2026-06-14-OPEN-DEPENDENCIES,2026-06-14,INI-AG-SPRING,open_dependencies_count,2,Count,Critical,Power Automate,Simple count of open FCC dependencies.
+SNP-AG-2026-06-14-HIGH-RISKS,2026-06-14,INI-AG-SPRING,high_risks_count,1,Count,Warning,Power Automate,Simple count of open high-severity FCC risks.
+SNP-AG-2026-06-14-COMMITMENT-COMPLIANCE,2026-06-14,INI-AG-SPRING,commitment_compliance_placeholder,,Percent,Not Evaluated,Power Automate,Placeholder/config_input only. No commitment compliance formula is calculated in Sprint 1.
+SNP-AG-2026-06-14-FOLLOWUP-COMPLIANCE,2026-06-14,INI-AG-SPRING,follow_up_compliance_placeholder,,Percent,Not Evaluated,Power Automate,Placeholder/config_input only. RE NXT Actions remain source activity data.
+SNP-MG-2026-06-14-OPEN-COMMITMENTS,2026-06-14,INI-MG-PGP,open_commitments_count,3,Count,Critical,Power Automate,Simple count of FCC commitments that are not completed.
+SNP-MG-2026-06-14-OVERDUE-COMMITMENTS,2026-06-14,INI-MG-PGP,overdue_commitments_count,1,Count,Warning,Power Automate,Simple count of FCC commitments with overdue status.
+SNP-MG-2026-06-14-OPEN-DEPENDENCIES,2026-06-14,INI-MG-PGP,open_dependencies_count,2,Count,Critical,Power Automate,Simple count of open FCC dependencies.
+SNP-MG-2026-06-14-HIGH-RISKS,2026-06-14,INI-MG-PGP,high_risks_count,2,Count,Critical,Power Automate,Simple count of open high-severity FCC risks.
+SNP-MG-2026-06-14-COMMITMENT-COMPLIANCE,2026-06-14,INI-MG-PGP,commitment_compliance_placeholder,,Percent,Not Evaluated,Power Automate,Placeholder/config_input only. No commitment compliance formula is calculated in Sprint 1.
+SNP-MG-2026-06-14-FOLLOWUP-COMPLIANCE,2026-06-14,INI-MG-PGP,follow_up_compliance_placeholder,,Percent,Not Evaluated,Power Automate,Placeholder/config_input only. RE NXT Actions remain source activity data.
