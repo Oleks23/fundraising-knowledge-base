@@ -1,0 +1,5 @@
+risk_id,risk_name,initiative,risk_type,severity,likelihood,status,owner,date_identified,target_resolution_date,source_system,source_record_id,mitigation_plan
+RSK-AG-001,Spring Appeal launch readiness risk,INI-AG-SPRING,Readiness,High,Medium,Open,Annual Giving Manager,2026-06-08,2026-06-18,Power Automate,RULE-READINESS-THRESHOLD,Resolve finance coding and creative approval dependencies before final deployment.
+RSK-AG-002,Overdue early-responder follow-up risk,INI-AG-SPRING,Follow-Up,Medium,High,Monitoring,Development Officer,2026-06-11,2026-06-20,RE NXT Actions,ACT-AG-2026-044,Complete overdue follow-up batch and review weekly follow-up compliance.
+RSK-MG-001,Principal gift opportunity stalled due to missing next action,INI-MG-PGP,Pipeline,High,High,Open,Major Gifts Officer,2026-06-06,2026-06-19,RE NXT Actions,ACT-MG-2026-091,Schedule next strategy discussion and confirm executive briefing timeline.
+RSK-MG-002,Executive briefing package blocked,INI-MG-PGP,Operational,High,Medium,Open,Principal Gifts Director,2026-06-07,2026-06-21,Planner,PLAN-MG-BRIEF-008,Escalate prospect research refresh and finance input to unblock briefing package.
