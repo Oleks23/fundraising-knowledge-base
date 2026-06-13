@@ -247,9 +247,11 @@ VAR LatestDate =
         ALL ( MetricSnapshots[metric_name] ),
         MetricSnapshots[metric_name] = "readiness_score_placeholder"
     )
+VAR ExplicitInitiativeContext =
+    ISFILTERED ( Initiatives[initiative_id] ) || ISINSCOPE ( Initiatives[initiative_id] )
 RETURN
     IF (
-        HASONEVALUE ( Initiatives[initiative_id] ),
+        ExplicitInitiativeContext,
         CALCULATE (
             MAX ( MetricSnapshots[metric_value] ),
             ALL ( MetricSnapshots[metric_name] ),
@@ -266,9 +268,11 @@ VAR LatestDate =
         ALL ( MetricSnapshots[metric_name] ),
         MetricSnapshots[metric_name] = "risk_score_placeholder"
     )
+VAR ExplicitInitiativeContext =
+    ISFILTERED ( Initiatives[initiative_id] ) || ISINSCOPE ( Initiatives[initiative_id] )
 RETURN
     IF (
-        HASONEVALUE ( Initiatives[initiative_id] ),
+        ExplicitInitiativeContext,
         CALCULATE (
             MAX ( MetricSnapshots[metric_value] ),
             ALL ( MetricSnapshots[metric_name] ),
