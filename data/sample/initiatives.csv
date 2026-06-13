@@ -1,0 +1,3 @@
+initiative_id,initiative_name,program,initiative_type,owner,department,status,start_date,target_date,goal_amount,readiness_score,risk_score,source_system,source_record_id
+INI-AG-SPRING,Spring Appeal,PRG-AG,Appeal,Annual Giving Manager,Annual Giving,Active,2026-03-01,2026-06-30,250000,72,38,RE NXT,APPEAL-2026-SPRING
+INI-MG-PGP,Principal Gifts Portfolio,PRG-MG,Portfolio,Principal Gifts Director,Major Gifts,Active,2026-01-15,2026-12-31,5000000,61,67,RE NXT,PORTFOLIO-PRINCIPAL-2026
