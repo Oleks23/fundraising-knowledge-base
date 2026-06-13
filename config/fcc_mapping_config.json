@@ -1,0 +1,181 @@
+{
+  "version": "1.0",
+  "description": "Initial FCC MVP mapping assumptions for synthetic RE NXT-style source data. This file documents implementation assumptions for scenario validation; it does not redefine the canonical FCC model.",
+  "mapping_principles": [
+    "The canonical model is stable; source-system mappings are variable.",
+    "RE NXT opportunities are not automatically commitments unless this configuration enables that interpretation.",
+    "RE NXT actions remain source activity data and are not generated as FCC-owned activity records.",
+    "Readiness scores are not calculated by the Sprint 1 overlay generator. Readiness must be supplied as a future config input, checklist result, or approved rule output."
+  ],
+  "programs": [
+    {
+      "program_id": "PRG-AG",
+      "program_name": "Annual Giving",
+      "program_type": "Annual Giving",
+      "executive_owner": "Director of Annual Giving",
+      "department": "Annual Giving",
+      "status": "Active",
+      "strategic_goal": "Increase broad-based donor participation and unrestricted revenue.",
+      "start_date": "2026-01-01",
+      "end_date": "2026-12-31"
+    },
+    {
+      "program_id": "PRG-MG",
+      "program_name": "Major Gifts",
+      "program_type": "Major Gifts",
+      "executive_owner": "VP Development",
+      "department": "Major Gifts",
+      "status": "Active",
+      "strategic_goal": "Advance high-value donor opportunities and principal gift readiness.",
+      "start_date": "2026-01-01",
+      "end_date": "2026-12-31"
+    }
+  ],
+  "initiatives": [
+    {
+      "initiative_key": "annual_giving_spring_appeal",
+      "initiative_id": "INI-AG-SPRING",
+      "initiative_name": "Spring Appeal",
+      "program": "PRG-AG",
+      "initiative_type": "Appeal",
+      "owner": "Annual Giving Manager",
+      "department": "Annual Giving",
+      "status": "Active",
+      "start_date": "2026-03-01",
+      "target_date": "2026-06-30",
+      "goal_amount": "250000",
+      "readiness_score": "",
+      "risk_score": "",
+      "source_system": "RE NXT",
+      "source_record_id": "APPEAL-2026-SPRING",
+      "source_match": {
+        "fields": ["appeal_name", "campaign_name", "opportunity_name", "action_type", "description"],
+        "contains_any": ["spring", "annual", "appeal"]
+      }
+    },
+    {
+      "initiative_key": "major_gifts_principal_portfolio",
+      "initiative_id": "INI-MG-PGP",
+      "initiative_name": "Principal Gifts Portfolio",
+      "program": "PRG-MG",
+      "initiative_type": "Portfolio",
+      "owner": "Principal Gifts Director",
+      "department": "Major Gifts",
+      "status": "Active",
+      "start_date": "2026-01-15",
+      "target_date": "2026-12-31",
+      "goal_amount": "5000000",
+      "readiness_score": "",
+      "risk_score": "",
+      "source_system": "RE NXT",
+      "source_record_id": "PORTFOLIO-PRINCIPAL-2026",
+      "source_match": {
+        "fields": ["portfolio", "opportunity_name", "campaign_name", "description"],
+        "contains_any": ["principal", "major gift", "major gifts"]
+      },
+      "fallback_for_unmatched_opportunities": true
+    }
+  ],
+  "source_mappings": {
+    "opportunities": {
+      "enabled": true,
+      "create_commitments": true,
+      "commitment_type": "Proposal",
+      "notes": "For the MVP scenario only, selected RE NXT-style opportunities are interpreted as FCC proposal commitments when matched to an initiative by this config. This is an implementation assumption, not a universal CRM rule."
+    },
+    "actions": {
+      "enabled": true,
+      "create_follow_up_commitments": true,
+      "commitment_type": "Donor Follow-Up",
+      "notes": "RE NXT Actions remain source activity data. FCC may create commitment/risk/metric outputs from them, but does not create an Activities list."
+    }
+  },
+  "thresholds": {
+    "high_value_amount": 1000000,
+    "stalled_activity_days": 90
+  },
+  "default_dependencies": [
+    {
+      "dependency_id": "DEP-AG-FINANCE-CODING",
+      "dependency_name": "Finance coding approval for appeal response tracking",
+      "initiative": "INI-AG-SPRING",
+      "dependency_type": "Approval",
+      "blocking_area": "Finance",
+      "impacted_area": "Annual Giving",
+      "owner": "Finance Business Partner",
+      "due_date_offset_days": -6,
+      "status": "Open",
+      "severity": "High",
+      "impact_description": "Appeal response reporting cannot be finalized until coding is approved.",
+      "resolution_notes": ""
+    },
+    {
+      "dependency_id": "DEP-AG-CREATIVE-APPROVAL",
+      "dependency_name": "Email creative final approval",
+      "initiative": "INI-AG-SPRING",
+      "dependency_type": "Review",
+      "blocking_area": "Marketing",
+      "impacted_area": "Annual Giving",
+      "owner": "Marketing Lead",
+      "due_date_offset_days": 1,
+      "status": "Open",
+      "severity": "Medium",
+      "impact_description": "Final email deployment is waiting for creative approval.",
+      "resolution_notes": ""
+    },
+    {
+      "dependency_id": "DEP-MG-RESEARCH-REFRESH",
+      "dependency_name": "Prospect research refresh for principal gift briefing",
+      "initiative": "INI-MG-PGP",
+      "dependency_type": "Resource",
+      "blocking_area": "Prospect Research",
+      "impacted_area": "Major Gifts",
+      "owner": "Prospect Research Manager",
+      "due_date_offset_days": -8,
+      "status": "Open",
+      "severity": "High",
+      "impact_description": "Executive briefing is blocked until updated capacity and affinity notes are available.",
+      "resolution_notes": ""
+    },
+    {
+      "dependency_id": "DEP-MG-CASE-APPROVAL",
+      "dependency_name": "Case for support approval",
+      "initiative": "INI-MG-PGP",
+      "dependency_type": "Approval",
+      "blocking_area": "Leadership",
+      "impacted_area": "Major Gifts",
+      "owner": "VP Development",
+      "due_date_offset_days": 7,
+      "status": "Open",
+      "severity": "High",
+      "impact_description": "Proposal development is blocked until leadership approves the case language.",
+      "resolution_notes": ""
+    }
+  ],
+  "knowledge_assets": [
+    {
+      "knowledge_id": "KNW-AG-SPRING-SEGMENTATION-SOP",
+      "title": "Spring Appeal Segmentation SOP",
+      "knowledge_type": "SOP",
+      "initiative": "INI-AG-SPRING",
+      "owner": "Annual Giving Manager",
+      "status": "Approved",
+      "source_authority": "Official",
+      "review_date": "2026-09-30",
+      "document_link": "https://sharepoint.example.com/sites/fcc/knowledge/spring-appeal-segmentation-sop",
+      "tags": "annual-giving;segmentation;appeal"
+    },
+    {
+      "knowledge_id": "KNW-MG-BRIEFING-TEMPLATE",
+      "title": "Principal Gift Briefing Template",
+      "knowledge_type": "Template",
+      "initiative": "INI-MG-PGP",
+      "owner": "Principal Gifts Director",
+      "status": "Approved",
+      "source_authority": "Official",
+      "review_date": "2026-10-31",
+      "document_link": "https://sharepoint.example.com/sites/fcc/knowledge/principal-gift-briefing-template",
+      "tags": "major-gifts;briefing;template"
+    }
+  ]
+}
