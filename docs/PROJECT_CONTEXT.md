@@ -316,24 +316,26 @@ Optional:
 
 ---
 
-# SharePoint Architecture
+## SharePoint Lists
 
-FCC owns:
+Primary operational store.
+
+Planned Lists:
 
 * Programs
 * Initiatives
 * Commitments
 * Dependencies
 * Risks
-* Knowledge Metadata
+* Knowledge
 * Metric Snapshots
 * Configuration
 
-FCC does not own:
-
-* CRM Actions
-* Planner Tasks
-* Project Plans
+Activities are intentionally NOT a provisioned List in the MVP.
+Activity data remains in source systems (RE NXT Actions, Planner,
+Asana, Smartsheet) and is consumed to derive Commitments, Risks,
+readiness, and compliance metrics. See SHAREPOINT_LISTS_DESIGN.md
+("Design Decision") for the rationale.
 
 ---
 
