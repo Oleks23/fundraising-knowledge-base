@@ -36,7 +36,7 @@ Programs
       -> MetricSnapshots
 ```
 
-Filters should flow from Program to Initiative, then from Initiative to child fact tables. Do not create direct Program-to-fact relationships for report convenience.
+Filters should flow from `Programs[program_id]` to `Initiatives[program]`, then from `Initiatives[initiative_id]` to child fact tables. Do not create direct Program-to-fact relationships for report convenience.
 
 Metric Snapshot behavior must follow `docs/METRIC_SNAPSHOT_ROLLUP_RULES.md`:
 
@@ -48,22 +48,39 @@ Metric Snapshot behavior must follow `docs/METRIC_SNAPSHOT_ROLLUP_RULES.md`:
 
 ---
 
+# Owner Filtering Limitation
+
+The MVP model does not yet include a conformed `Dim Owner` table.
+
+Owner-based slicers and visuals must be object-specific unless a future owner dimension is built. Use fields such as:
+
+- `Initiatives[owner]`
+- `Commitments[owner]`
+- `Dependencies[owner]`
+- `Risks[owner]`
+- `Knowledge[owner]`
+- `Programs[executive_owner]`
+
+Do not imply that one Owner slicer filters all FCC objects in the MVP. Any cross-object owner workload visual must be labeled as future-after-Dim-Owner.
+
+---
+
 # Shared Report Filters
 
 Use these common slicers where useful across pages:
 
-| Slicer | Source table | Field |
+| Slicer | Source field | MVP behavior |
 | --- | --- | --- |
-| Program | Programs | `program_name` |
-| Initiative | Initiatives | `initiative_name` |
-| Initiative Status | Initiatives | `status` |
-| Owner | Initiatives, Commitments, Dependencies, Risks, Knowledge | `owner` |
-| Department | Programs, Initiatives | `department` |
-| Snapshot Date | MetricSnapshots | `snapshot_date` |
-| Commitment Type | Commitments | `commitment_type` |
-| Risk Type | Risks | `risk_type` |
-| Dependency Type | Dependencies | `dependency_type` |
-| Source System | source-traceable tables | `source_system` |
+| Program | `Programs[program_name]` | Shared Program filter through Initiative relationship path. |
+| Initiative | `Initiatives[initiative_name]` | Shared Initiative filter. |
+| Initiative Status | `Initiatives[status]` | Initiative lifecycle only. |
+| Department | `Programs[department]`, `Initiatives[department]` | Use object-specific field unless a future department dimension is created. |
+| Snapshot Date | `MetricSnapshots[snapshot_date]` | Snapshot-specific date filter. |
+| Commitment Type | `Commitments[commitment_type]` | Commitment page/filter context. |
+| Risk Type | `Risks[risk_type]` | Risk page/filter context. |
+| Dependency Type | `Dependencies[dependency_type]` | Dependency page/filter context. |
+| Source System | `Commitments[source_system]`, `Risks[source_system]`, `MetricSnapshots[source_system]` | Object-specific lineage filter; not a relationship key. |
+| Owner | Object-specific owner fields | No conformed Owner slicer in MVP. |
 
 Use a dedicated Date table when added to the semantic model. Until then, date slicers may use base table date fields for MVP validation.
 
@@ -75,12 +92,12 @@ The MVP report should support these drillthrough targets:
 
 | Drillthrough target | Context fields | Purpose |
 | --- | --- | --- |
-| Initiative Detail | `initiative_id`, `initiative_name` | Show one Initiative with its commitments, dependencies, risks, knowledge, and latest Initiative-level score placeholders. |
-| Program Detail | `program_id`, `program_name` | Show all Initiatives and aggregated operational facts for one Program. Do not show Program readiness/risk score unless explicitly supplied. |
-| Commitment Detail | `commitment_id` | Show commitment owner, due date, status, source system, source record ID, escalation, and notes. |
-| Risk Detail | `risk_id` | Show risk severity, likelihood, owner, mitigation plan, source system, and source record ID. |
-| Dependency Detail | `dependency_id` | Show blocker details, impacted area, owner, due date, severity, and resolution notes. |
-| Knowledge Detail | `knowledge_id` | Show knowledge asset metadata, review date, owner, status, document link, and tags. |
+| Initiative Detail | `Initiatives[initiative_id]`, `Initiatives[initiative_name]` | Show one Initiative with its commitments, dependencies, risks, knowledge, and latest Initiative-level score placeholders. |
+| Program Detail | `Programs[program_id]`, `Programs[program_name]` | Show all Initiatives and aggregated operational facts for one Program. Do not show Program readiness/risk score unless explicitly supplied. |
+| Commitment Detail | `Commitments[commitment_id]` | Show `Commitments[owner]`, `Commitments[due_date]`, `Commitments[status]`, `Commitments[source_system]`, `Commitments[source_record_id]`, escalation, and notes. |
+| Risk Detail | `Risks[risk_id]` | Show `Risks[severity]`, `Risks[likelihood]`, `Risks[owner]`, `Risks[mitigation_plan]`, `Risks[source_system]`, and `Risks[source_record_id]`. |
+| Dependency Detail | `Dependencies[dependency_id]` | Show blocker details, `Dependencies[impacted_area]`, `Dependencies[owner]`, `Dependencies[due_date]`, `Dependencies[severity]`, and resolution notes. |
+| Knowledge Detail | `Knowledge[knowledge_id]` | Show knowledge asset metadata, `Knowledge[review_date]`, `Knowledge[owner]`, `Knowledge[status]`, document link, and tags. |
 
 Source-system drillthrough should use `source_system` and `source_record_id` as lineage fields only. Do not imply FCC owns the underlying source activity, task, opportunity, or CRM action.
 
@@ -108,12 +125,12 @@ This page answers:
 
 ## Filters/Slicers
 
-- Program
-- Department
-- Executive Owner
-- Initiative Status
-- Snapshot Date
-- Source System
+- `Programs[program_name]`
+- `Programs[department]`
+- `Programs[executive_owner]`
+- `Initiatives[status]`
+- `MetricSnapshots[snapshot_date]`
+- Object-specific `source_system` fields when lineage filtering is needed
 
 Avoid defaulting this page to a single Initiative. It is primarily an Executive and Program-level page.
 
@@ -139,17 +156,17 @@ Do not display Program-level or Executive-level readiness score unless an approv
 | --- | --- | --- | --- |
 | Program Operational Load | Clustered bar | Axis: `Programs[program_name]`; Values: `Open Commitments Latest`, `Overdue Commitments Latest`, `Open Dependencies Latest`, `High Risks Latest` | Compare operational burden by Program. |
 | Initiatives Requiring Intervention | Ranked bar or table | `Initiatives[initiative_name]`, `Overdue Commitments`, `High Risks`, `High Severity Dependencies` | Identify highest-pressure Initiatives. |
-| Risk Severity Mix | Stacked bar or donut | `Risks[severity]`, count of `Risks[risk_id]` filtered to open/monitoring | Show severity composition. |
+| Risk Severity Mix | Stacked bar or donut | `Risks[severity]`, count of `Risks[risk_id]` filtered to open/monitoring status | Show severity composition. |
 | Commitment Status Mix | Stacked bar | `Commitments[status]`, count of `Commitments[commitment_id]` | Show current accountability status. |
-| Snapshot Trend | Line chart | Axis: `MetricSnapshots[snapshot_date]`; Legend: `metric_name`; Values: `metric_value`; filter to count metrics only | Show recent movement for operational counts. |
+| Snapshot Trend | Line chart | Axis: `MetricSnapshots[snapshot_date]`; Legend: `MetricSnapshots[metric_name]`; Values: `MetricSnapshots[metric_value]`; filter to count metrics only | Show recent movement for operational counts. |
 
 ## Table Visuals
 
 | Table | Fields |
 | --- | --- |
-| Top Intervention List | Program, Initiative, Owner, Status, `Overdue Commitments`, `High Risks`, `High Severity Dependencies`, target date |
-| High/Critical Risks | Risk name, Initiative, Owner, Severity, Likelihood, Target Resolution Date, Source System, Source Record ID |
-| Overdue Commitments | Commitment name, Initiative, Owner, Due Date, Priority, Escalation Level, Source System, Source Record ID |
+| Top Intervention List | `Programs[program_name]`, `Initiatives[initiative_name]`, `Initiatives[owner]`, `Initiatives[status]`, `Initiatives[target_date]`, `Overdue Commitments`, `High Risks`, `High Severity Dependencies` |
+| High/Critical Risks | `Risks[risk_name]`, `Initiatives[initiative_name]`, `Risks[owner]`, `Risks[severity]`, `Risks[likelihood]`, `Risks[target_resolution_date]`, `Risks[source_system]`, `Risks[source_record_id]` |
+| Overdue Commitments | `Commitments[commitment_name]`, `Initiatives[initiative_name]`, `Commitments[owner]`, `Commitments[due_date]`, `Commitments[priority]`, `Commitments[escalation_level]`, `Commitments[source_system]`, `Commitments[source_record_id]` |
 
 ## Measures Used
 
@@ -168,10 +185,10 @@ Do not display Program-level or Executive-level readiness score unless an approv
 
 ## Drillthrough Behavior
 
-- Program bar -> Program Detail.
-- Initiative row -> Initiative Detail.
-- Risk row -> Risk Detail.
-- Commitment row -> Commitment Detail.
+- `Programs[program_name]` bar -> Program Detail.
+- `Initiatives[initiative_name]` row -> Initiative Detail.
+- `Risks[risk_id]` row -> Risk Detail.
+- `Commitments[commitment_id]` row -> Commitment Detail.
 
 ## Warnings/Limitations
 
@@ -179,17 +196,18 @@ Do not display Program-level or Executive-level readiness score unless an approv
 - Executive readiness score must not be displayed unless an approved Executive-level MetricSnapshot exists.
 - Snapshot cards reflect latest snapshot data, while current-state tables reflect current fact records; label visuals accordingly.
 - Do not add source-system task or activity visuals.
+- Owner filtering is object-specific in MVP; `Programs[executive_owner]` does not filter all child object owner fields as a conformed person dimension.
 
 ## AI Summary Input Fields
 
 Use these fields for Executive summaries:
 
-- Programs: `program_name`, `executive_owner`, `department`, `status`
-- Initiatives: `initiative_name`, `owner`, `status`, `target_date`
-- MetricSnapshots: `snapshot_date`, `metric_name`, `metric_value`, `threshold_status`
-- Risks: `risk_name`, `severity`, `likelihood`, `status`, `mitigation_plan`, `target_resolution_date`
-- Dependencies: `dependency_name`, `severity`, `status`, `impact_description`, `due_date`
-- Commitments: `commitment_name`, `owner`, `due_date`, `status`, `priority`, `escalation_level`
+- Programs: `Programs[program_name]`, `Programs[executive_owner]`, `Programs[department]`, `Programs[status]`
+- Initiatives: `Initiatives[initiative_name]`, `Initiatives[owner]`, `Initiatives[status]`, `Initiatives[target_date]`
+- MetricSnapshots: `MetricSnapshots[snapshot_date]`, `MetricSnapshots[metric_name]`, `MetricSnapshots[metric_value]`, `MetricSnapshots[threshold_status]`
+- Risks: `Risks[risk_name]`, `Risks[severity]`, `Risks[likelihood]`, `Risks[status]`, `Risks[mitigation_plan]`, `Risks[target_resolution_date]`
+- Dependencies: `Dependencies[dependency_name]`, `Dependencies[severity]`, `Dependencies[status]`, `Dependencies[impact_description]`, `Dependencies[due_date]`
+- Commitments: `Commitments[commitment_name]`, `Commitments[owner]`, `Commitments[due_date]`, `Commitments[status]`, `Commitments[priority]`, `Commitments[escalation_level]`
 
 AI should explain existing measures and records. It should not calculate new KPIs from raw records.
 
@@ -218,12 +236,12 @@ This page answers:
 
 ## Filters/Slicers
 
-- Program
-- Initiative Status
-- Initiative Type
-- Owner
-- Department
-- Target Date range
+- `Programs[program_name]`
+- `Initiatives[status]`
+- `Initiatives[initiative_type]`
+- `Initiatives[owner]` as an Initiative-specific owner slicer
+- `Initiatives[department]`
+- `Initiatives[target_date]`
 
 ## KPI Cards
 
@@ -242,17 +260,18 @@ Do not show average Program readiness score. Initiative-level score placeholders
 
 | Visual | Type | Fields / Measures | Purpose |
 | --- | --- | --- | --- |
-| Initiative Portfolio Matrix | Matrix | Rows: Program, Initiative; Columns/Values: Owner, Status, Target Date, Open Commitments, Open Dependencies, High Risks | Main work inventory. |
-| Initiative Status by Program | Stacked bar | Axis: Program; Legend: Initiative Status; Values: Initiative count | Show distribution of active/completed/on-hold work. |
-| Owner Workload | Bar chart | Axis: Owner; Values: Active Initiatives, Open Commitments, Open Dependencies, Open Risks | Show accountability concentration. |
-| Target Date Timeline | Timeline or bar by month | Axis: Target Date month; Values: Initiative count | Show upcoming portfolio milestones. |
+| Initiative Portfolio Matrix | Matrix | Rows: `Programs[program_name]`, `Initiatives[initiative_name]`; Values: `Initiatives[owner]`, `Initiatives[status]`, `Initiatives[target_date]`, `Open Commitments`, `Open Dependencies`, `High Risks` | Main work inventory. |
+| Initiative Status by Program | Stacked bar | Axis: `Programs[program_name]`; Legend: `Initiatives[status]`; Values: count of `Initiatives[initiative_id]` | Show distribution of active/completed/on-hold work. |
+| Initiative Owner Workload | Bar chart | Axis: `Initiatives[owner]`; Values: `Active Initiatives` | MVP object-specific owner view for Initiative ownership only. |
+| Future Conformed Owner Workload | Bar chart | Axis: future `Dim Owner`; Values: Active Initiatives, Open Commitments, Open Dependencies, Open Risks | Future-after-Dim-Owner only; do not build as MVP cross-object slicer. |
+| Target Date Timeline | Timeline or bar by month | Axis: `Initiatives[target_date]` month; Values: count of `Initiatives[initiative_id]` | Show upcoming portfolio milestones. |
 
 ## Table Visuals
 
 | Table | Fields |
 | --- | --- |
-| Initiative Register | Initiative ID, Initiative Name, Program, Initiative Type, Owner, Department, Status, Start Date, Target Date, Goal Amount, Source System, Source Record ID |
-| Portfolio Risk/Execution Summary | Initiative Name, Owner, Open Commitments, Overdue Commitments, Open Dependencies, High Risks, Critical Risks |
+| Initiative Register | `Initiatives[initiative_id]`, `Initiatives[initiative_name]`, `Programs[program_name]`, `Initiatives[initiative_type]`, `Initiatives[owner]`, `Initiatives[department]`, `Initiatives[status]`, `Initiatives[start_date]`, `Initiatives[target_date]`, `Initiatives[goal_amount]`, `Initiatives[source_system]`, `Initiatives[source_record_id]` |
+| Portfolio Risk/Execution Summary | `Initiatives[initiative_name]`, `Initiatives[owner]`, `Open Commitments`, `Overdue Commitments`, `Open Dependencies`, `High Risks`, `Critical Risks` |
 
 ## Measures Used
 
@@ -269,22 +288,23 @@ Do not show average Program readiness score. Initiative-level score placeholders
 
 ## Drillthrough Behavior
 
-- Program row -> Program Detail.
-- Initiative row -> Initiative Detail.
-- Owner selection filters related commitments, dependencies, risks, and knowledge where owner fields are available.
+- `Programs[program_name]` row -> Program Detail.
+- `Initiatives[initiative_name]` row -> Initiative Detail.
+- `Initiatives[owner]` selection filters Initiative-owned visuals only in MVP.
 
 ## Warnings/Limitations
 
-- Owner is text in MVP and may not represent a resolved identity dimension yet.
+- MVP owner fields are text fields on each object, not a resolved identity dimension.
+- One Owner slicer must not be used to filter all objects until a conformed `Dim Owner` exists.
 - Program-level scores are intentionally absent.
 - Source system fields indicate lineage, not ownership by FCC.
 
 ## AI Summary Input Fields
 
-- Program and Initiative identity fields
-- Initiative owner, status, department, target date
+- `Programs[program_name]`, `Programs[program_id]`
+- `Initiatives[initiative_id]`, `Initiatives[initiative_name]`, `Initiatives[owner]`, `Initiatives[status]`, `Initiatives[department]`, `Initiatives[target_date]`
 - Open/overdue counts from Commitments, Dependencies, and Risks
-- Source system/source record ID for lineage context
+- `source_system` and `source_record_id` fields for lineage context
 
 ---
 
@@ -309,12 +329,12 @@ This page answers:
 
 ## Filters/Slicers
 
-- Program
-- Initiative
-- Initiative Owner
-- Initiative Status
-- Snapshot Date
-- Threshold Status
+- `Programs[program_name]`
+- `Initiatives[initiative_name]`
+- `Initiatives[owner]` as an Initiative-specific owner slicer
+- `Initiatives[status]`
+- `MetricSnapshots[snapshot_date]`
+- `MetricSnapshots[threshold_status]`
 
 This page should usually require Initiative selection before showing readiness/risk score placeholder cards.
 
@@ -334,20 +354,20 @@ This page should usually require Initiative selection before showing readiness/r
 
 | Visual | Type | Fields / Measures | Purpose |
 | --- | --- | --- | --- |
-| Initiative Readiness Snapshot | Card group or KPI strip | `Readiness Score Placeholder Latest`, `Risk Score Placeholder Latest`, latest count metrics | Show Initiative-level imported score context. |
-| Execution Pressure Trend | Line chart | Axis: `snapshot_date`; Legend: count metric names; Value: `metric_value` | Track counts over time for selected Initiative. |
-| Commitments by Due Window | Bar chart | Due buckets derived from `due_date`; Values: count of Commitments | Show near-term execution pressure. |
-| Dependencies Blocking Execution | Bar/table | Dependency type, blocking area, severity, due date | Identify blockers. |
-| Risks by Type and Severity | Stacked bar | Risk type, severity, count | Show risk drivers. |
+| Initiative Readiness Snapshot | Card group or KPI strip | `Readiness Score Placeholder Latest`, `Risk Score Placeholder Latest`, `Open Commitments Latest`, `Overdue Commitments Latest`, `Open Dependencies Latest`, `High Risks Latest` | Show Initiative-level imported score context. |
+| Execution Pressure Trend | Line chart | Axis: `MetricSnapshots[snapshot_date]`; Legend: `MetricSnapshots[metric_name]`; Value: `MetricSnapshots[metric_value]`; filter to count metrics | Track counts over time for selected Initiative. |
+| Commitments by Due Window | Bar chart | Buckets derived from `Commitments[due_date]`; Values: count of `Commitments[commitment_id]` | Show near-term execution pressure. |
+| Dependencies Blocking Execution | Bar/table | `Dependencies[dependency_type]`, `Dependencies[blocking_area]`, `Dependencies[severity]`, `Dependencies[due_date]` | Identify blockers. |
+| Risks by Type and Severity | Stacked bar | `Risks[risk_type]`, `Risks[severity]`, count of `Risks[risk_id]` | Show risk drivers. |
 
 ## Table Visuals
 
 | Table | Fields |
 | --- | --- |
-| Readiness Metric Snapshots | Snapshot Date, Initiative, Metric Name, Metric Value, Metric Unit, Threshold Status, Source System, Notes |
-| Execution Commitments | Commitment Name, Owner, Due Date, Status, Priority, Escalation Level, Source System, Source Record ID |
-| Blocking Dependencies | Dependency Name, Dependency Type, Blocking Area, Impacted Area, Owner, Due Date, Status, Severity, Impact Description |
-| Readiness Risks | Risk Name, Risk Type, Severity, Likelihood, Owner, Status, Mitigation Plan, Target Resolution Date |
+| Readiness Metric Snapshots | `MetricSnapshots[snapshot_date]`, `Initiatives[initiative_name]`, `MetricSnapshots[metric_name]`, `MetricSnapshots[metric_value]`, `MetricSnapshots[metric_unit]`, `MetricSnapshots[threshold_status]`, `MetricSnapshots[source_system]`, `MetricSnapshots[notes]` |
+| Execution Commitments | `Commitments[commitment_name]`, `Commitments[owner]`, `Commitments[due_date]`, `Commitments[status]`, `Commitments[priority]`, `Commitments[escalation_level]`, `Commitments[source_system]`, `Commitments[source_record_id]` |
+| Blocking Dependencies | `Dependencies[dependency_name]`, `Dependencies[dependency_type]`, `Dependencies[blocking_area]`, `Dependencies[impacted_area]`, `Dependencies[owner]`, `Dependencies[due_date]`, `Dependencies[status]`, `Dependencies[severity]`, `Dependencies[impact_description]` |
+| Readiness Risks | `Risks[risk_name]`, `Risks[risk_type]`, `Risks[severity]`, `Risks[likelihood]`, `Risks[owner]`, `Risks[status]`, `Risks[mitigation_plan]`, `Risks[target_resolution_date]` |
 
 ## Measures Used
 
@@ -365,10 +385,10 @@ This page should usually require Initiative selection before showing readiness/r
 
 ## Drillthrough Behavior
 
-- Initiative selection -> Initiative Detail.
-- Commitment row -> Commitment Detail.
-- Dependency row -> Dependency Detail.
-- Risk row -> Risk Detail.
+- `Initiatives[initiative_name]` selection -> Initiative Detail.
+- `Commitments[commitment_id]` row -> Commitment Detail.
+- `Dependencies[dependency_id]` row -> Dependency Detail.
+- `Risks[risk_id]` row -> Risk Detail.
 
 ## Warnings/Limitations
 
@@ -376,15 +396,16 @@ This page should usually require Initiative selection before showing readiness/r
 - `Readiness Score Placeholder Latest` and `Risk Score Placeholder Latest` are imported values only.
 - Program-level and Executive-level score cards must remain blank unless approved higher-level snapshots exist.
 - Activity-derived indicators may appear only through commitments, risks, dependencies, metric snapshots, or source references.
+- Owner filtering is object-specific in MVP.
 
 ## AI Summary Input Fields
 
-- Initiative identity, owner, status, target date
+- `Initiatives[initiative_id]`, `Initiatives[initiative_name]`, `Initiatives[owner]`, `Initiatives[status]`, `Initiatives[target_date]`
 - Score placeholder snapshots and notes
 - Open and overdue commitment details
 - Blocking dependency details
 - High and critical risk details
-- Threshold status and source system fields from MetricSnapshots
+- `MetricSnapshots[threshold_status]` and `MetricSnapshots[source_system]`
 
 ---
 
@@ -411,18 +432,19 @@ This page answers:
 
 ## Filters/Slicers
 
-- Program
-- Initiative
-- Dependency Type
-- Blocking Area
-- Impacted Area
-- Dependency Status
-- Dependency Severity
-- Risk Type
-- Risk Severity
-- Risk Status
-- Owner
-- Due Date / Target Resolution Date range
+- `Programs[program_name]`
+- `Initiatives[initiative_name]`
+- `Dependencies[dependency_type]`
+- `Dependencies[blocking_area]`
+- `Dependencies[impacted_area]`
+- `Dependencies[status]`
+- `Dependencies[severity]`
+- `Risks[risk_type]`
+- `Risks[severity]`
+- `Risks[status]`
+- `Dependencies[owner]` or `Risks[owner]` as object-specific owner slicers
+- `Dependencies[due_date]`
+- `Risks[target_resolution_date]`
 
 ## KPI Cards
 
@@ -440,19 +462,19 @@ This page answers:
 
 | Visual | Type | Fields / Measures | Purpose |
 | --- | --- | --- | --- |
-| Dependency Blocker Map | Matrix | Rows: Blocking Area; Columns: Impacted Area; Values: Open Dependencies / High Severity Dependencies | Identify bottleneck patterns. |
-| Risk Severity by Program | Stacked bar | Axis: Program; Legend: Severity; Values: Risk count | Compare risk load. |
-| Risk Type Mix | Bar or treemap | Risk Type; Risk count | Show major threat categories. |
-| Dependency Aging / Due Timeline | Bar by due bucket | Due Date bucket; Values: Open Dependencies | Show urgency. |
-| Risk Resolution Timeline | Bar by target resolution date | Target Resolution Date; Values: Open Risks | Show upcoming risk resolution pressure. |
+| Dependency Blocker Map | Matrix | Rows: `Dependencies[blocking_area]`; Columns: `Dependencies[impacted_area]`; Values: `Open Dependencies`, `High Severity Dependencies` | Identify bottleneck patterns. |
+| Risk Severity by Program | Stacked bar | Axis: `Programs[program_name]`; Legend: `Risks[severity]`; Values: count of `Risks[risk_id]` | Compare risk load. |
+| Risk Type Mix | Bar or treemap | `Risks[risk_type]`; Values: count of `Risks[risk_id]` | Show major threat categories. |
+| Dependency Aging / Due Timeline | Bar by due bucket | Buckets derived from `Dependencies[due_date]`; Values: `Open Dependencies` | Show urgency. |
+| Risk Resolution Timeline | Bar by target resolution date | `Risks[target_resolution_date]`; Values: `Open Risks` | Show upcoming risk resolution pressure. |
 
 ## Table Visuals
 
 | Table | Fields |
 | --- | --- |
-| Dependency Register | Dependency ID, Dependency Name, Initiative, Dependency Type, Blocking Area, Impacted Area, Owner, Due Date, Status, Severity, Impact Description, Resolution Notes |
-| Risk Register | Risk ID, Risk Name, Initiative, Risk Type, Severity, Likelihood, Status, Owner, Date Identified, Target Resolution Date, Mitigation Plan, Source System, Source Record ID |
-| At-Risk Initiatives | Program, Initiative, Owner, Status, High Severity Dependencies, High Risks, Critical Risks |
+| Dependency Register | `Dependencies[dependency_id]`, `Dependencies[dependency_name]`, `Initiatives[initiative_name]`, `Dependencies[dependency_type]`, `Dependencies[blocking_area]`, `Dependencies[impacted_area]`, `Dependencies[owner]`, `Dependencies[due_date]`, `Dependencies[status]`, `Dependencies[severity]`, `Dependencies[impact_description]`, `Dependencies[resolution_notes]` |
+| Risk Register | `Risks[risk_id]`, `Risks[risk_name]`, `Initiatives[initiative_name]`, `Risks[risk_type]`, `Risks[severity]`, `Risks[likelihood]`, `Risks[status]`, `Risks[owner]`, `Risks[date_identified]`, `Risks[target_resolution_date]`, `Risks[mitigation_plan]`, `Risks[source_system]`, `Risks[source_record_id]` |
+| At-Risk Initiatives | `Programs[program_name]`, `Initiatives[initiative_name]`, `Initiatives[owner]`, `Initiatives[status]`, `High Severity Dependencies`, `High Risks`, `Critical Risks` |
 
 ## Measures Used
 
@@ -470,23 +492,24 @@ This page answers:
 
 ## Drillthrough Behavior
 
-- Dependency row -> Dependency Detail.
-- Risk row -> Risk Detail.
-- Initiative row -> Initiative Detail.
-- Program bar -> Program Detail.
+- `Dependencies[dependency_id]` row -> Dependency Detail.
+- `Risks[risk_id]` row -> Risk Detail.
+- `Initiatives[initiative_name]` row -> Initiative Detail.
+- `Programs[program_name]` bar -> Program Detail.
 
 ## Warnings/Limitations
 
 - Dependencies and Risks link to Initiative, not directly to Program.
 - High risks from snapshots and current high risks from the Risks table may differ if snapshot timing differs from current records.
 - Source records may point back to CRM or planning systems, but those records remain outside FCC ownership.
+- Use `Dependencies[owner]` and `Risks[owner]` separately unless a future `Dim Owner` is added.
 
 ## AI Summary Input Fields
 
-- Dependency blocker/impacted areas, severity, due date, impact description
-- Risk severity, likelihood, mitigation plan, target resolution date
-- Initiative and Program context
-- Source system and source record ID for traceability
+- `Dependencies[blocking_area]`, `Dependencies[impacted_area]`, `Dependencies[severity]`, `Dependencies[due_date]`, `Dependencies[impact_description]`
+- `Risks[severity]`, `Risks[likelihood]`, `Risks[mitigation_plan]`, `Risks[target_resolution_date]`
+- `Initiatives[initiative_name]` and `Programs[program_name]`
+- `source_system` and `source_record_id` fields for traceability
 
 ---
 
@@ -513,15 +536,15 @@ This page answers:
 
 ## Filters/Slicers
 
-- Program
-- Initiative
-- Owner
-- Commitment Type
-- Commitment Status
-- Priority
-- Escalation Level
-- Due Date range
-- Source System
+- `Programs[program_name]`
+- `Initiatives[initiative_name]`
+- `Commitments[owner]` as a Commitment-specific owner slicer
+- `Commitments[commitment_type]`
+- `Commitments[status]`
+- `Commitments[priority]`
+- `Commitments[escalation_level]`
+- `Commitments[due_date]`
+- `Commitments[source_system]`
 
 ## KPI Cards
 
@@ -539,19 +562,19 @@ This page answers:
 
 | Visual | Type | Fields / Measures | Purpose |
 | --- | --- | --- | --- |
-| Commitments by Status | Stacked bar | Status; count of Commitments | Show accountability state. |
-| Overdue by Owner | Bar chart | Owner; `Overdue Commitments` | Identify follow-up/accountability pressure. |
-| Due Date Calendar / Timeline | Calendar or bar by week | Due Date; count of Commitments | Show work coming due. |
-| Commitment Type Mix | Bar chart | Commitment Type; count of Commitments | Show type of obligations. |
-| Compliance Placeholder Trend | Line chart | Snapshot Date; `follow_up_compliance`, `commitment_compliance` values | Show imported placeholder trends only. |
+| Commitments by Status | Stacked bar | `Commitments[status]`; Values: count of `Commitments[commitment_id]` | Show accountability state. |
+| Overdue by Commitment Owner | Bar chart | Axis: `Commitments[owner]`; Values: `Overdue Commitments` | Identify follow-up/accountability pressure for Commitments only. |
+| Due Date Calendar / Timeline | Calendar or bar by week | `Commitments[due_date]`; Values: count of `Commitments[commitment_id]` | Show work coming due. |
+| Commitment Type Mix | Bar chart | `Commitments[commitment_type]`; Values: count of `Commitments[commitment_id]` | Show type of obligations. |
+| Compliance Placeholder Trend | Line chart | Axis: `MetricSnapshots[snapshot_date]`; Legend/filter: `follow_up_compliance`, `commitment_compliance`; Values: `MetricSnapshots[metric_value]` | Show imported placeholder trends only. |
 
 ## Table Visuals
 
 | Table | Fields |
 | --- | --- |
-| Commitment Work Queue | Commitment ID, Commitment Name, Initiative, Commitment Type, Owner, Due Date, Status, Priority, Value Amount, Escalation Level, Source System, Source Record ID, Notes |
-| Overdue Commitments | Commitment Name, Initiative, Owner, Due Date, Priority, Escalation Level, Source System, Source Record ID |
-| Source Traceability | Commitment ID, Source System, Source Record ID, Notes |
+| Commitment Work Queue | `Commitments[commitment_id]`, `Commitments[commitment_name]`, `Initiatives[initiative_name]`, `Commitments[commitment_type]`, `Commitments[owner]`, `Commitments[due_date]`, `Commitments[status]`, `Commitments[priority]`, `Commitments[value_amount]`, `Commitments[escalation_level]`, `Commitments[source_system]`, `Commitments[source_record_id]`, `Commitments[notes]` |
+| Overdue Commitments | `Commitments[commitment_name]`, `Initiatives[initiative_name]`, `Commitments[owner]`, `Commitments[due_date]`, `Commitments[priority]`, `Commitments[escalation_level]`, `Commitments[source_system]`, `Commitments[source_record_id]` |
+| Source Traceability | `Commitments[commitment_id]`, `Commitments[source_system]`, `Commitments[source_record_id]`, `Commitments[notes]` |
 
 ## Measures Used
 
@@ -567,9 +590,9 @@ This page answers:
 
 ## Drillthrough Behavior
 
-- Commitment row -> Commitment Detail.
-- Initiative row -> Initiative Detail.
-- Owner selection cross-filters Commitments, Risks, and Dependencies where owner fields match.
+- `Commitments[commitment_id]` row -> Commitment Detail.
+- `Initiatives[initiative_name]` row -> Initiative Detail.
+- `Commitments[owner]` selection filters Commitment visuals only in MVP.
 
 ## Warnings/Limitations
 
@@ -577,13 +600,14 @@ This page answers:
 - Follow-up compliance is a MetricSnapshot placeholder until approved weighted numerator/denominator inputs exist.
 - Commitment completion rate is based on FCC Commitment records, not source-system Activities.
 - Source system fields support lineage only.
+- Do not use `Commitments[owner]` as a cross-object owner filter until a conformed `Dim Owner` exists.
 
 ## AI Summary Input Fields
 
 - Open and overdue commitment details
 - Due-next-seven-days commitments
-- Commitment owners and escalation levels
-- Source system and source record ID
+- `Commitments[owner]` and `Commitments[escalation_level]`
+- `Commitments[source_system]` and `Commitments[source_record_id]`
 - Compliance placeholder snapshots and notes
 
 ---
@@ -611,14 +635,14 @@ This page answers:
 
 ## Filters/Slicers
 
-- Program
-- Initiative
-- Knowledge Type
-- Knowledge Status
-- Source Authority
-- Owner
-- Review Date range
-- Tags
+- `Programs[program_name]`
+- `Initiatives[initiative_name]`
+- `Knowledge[knowledge_type]`
+- `Knowledge[status]`
+- `Knowledge[source_authority]`
+- `Knowledge[owner]` as a Knowledge-specific owner slicer
+- `Knowledge[review_date]`
+- `Knowledge[tags]`
 
 Knowledge status must remain separate from operational status.
 
@@ -631,8 +655,8 @@ These may be implemented as simple counts in the visual layer if DAX measures ar
 | Knowledge Assets | Count of `Knowledge[knowledge_id]` | Total knowledge records in context. |
 | Approved Assets | Count filtered to `Knowledge[status] = "Approved"` | Knowledge lifecycle only. |
 | Draft Assets | Count filtered to `Knowledge[status] = "Draft"` | Knowledge lifecycle only. |
-| Assets Due For Review | Count where `review_date < TODAY()` | Future DAX measure recommended. |
-| Assets Missing Owner | Count blank owner | Future DAX measure recommended. |
+| Assets Due For Review | Count where `Knowledge[review_date] < TODAY()` | Future DAX measure recommended. |
+| Assets Missing Owner | Count blank `Knowledge[owner]` | Future DAX measure recommended. |
 
 Do not reuse operational status measures for Knowledge.
 
@@ -640,19 +664,19 @@ Do not reuse operational status measures for Knowledge.
 
 | Visual | Type | Fields / Measures | Purpose |
 | --- | --- | --- | --- |
-| Knowledge by Program and Initiative | Matrix | Program, Initiative, Knowledge Type, count of Knowledge ID | Show support coverage. |
-| Knowledge Status Mix | Bar or donut | Knowledge Status; count of Knowledge ID | Show lifecycle state. |
-| Review Calendar | Timeline/table | Review Date; Knowledge Title; Owner | Show upcoming review obligations. |
-| Source Authority Mix | Bar chart | Source Authority; count of Knowledge ID | Distinguish Working, Approved, Official assets. |
-| Tag Explorer | Table or slicer | Tags, Title, Knowledge Type | Support search-like navigation. |
+| Knowledge by Program and Initiative | Matrix | Rows: `Programs[program_name]`, `Initiatives[initiative_name]`; Columns: `Knowledge[knowledge_type]`; Values: count of `Knowledge[knowledge_id]` | Show support coverage. |
+| Knowledge Status Mix | Bar or donut | `Knowledge[status]`; Values: count of `Knowledge[knowledge_id]` | Show lifecycle state. |
+| Review Calendar | Timeline/table | `Knowledge[review_date]`, `Knowledge[title]`, `Knowledge[owner]` | Show upcoming review obligations. |
+| Source Authority Mix | Bar chart | `Knowledge[source_authority]`; Values: count of `Knowledge[knowledge_id]` | Distinguish Working, Approved, Official assets. |
+| Tag Explorer | Table or slicer | `Knowledge[tags]`, `Knowledge[title]`, `Knowledge[knowledge_type]` | Support search-like navigation. |
 
 ## Table Visuals
 
 | Table | Fields |
 | --- | --- |
-| Knowledge Asset Register | Knowledge ID, Title, Knowledge Type, Program, Initiative, Owner, Status, Source Authority, Review Date, Document Link, Tags |
-| Assets Due For Review | Title, Knowledge Type, Owner, Status, Source Authority, Review Date, Program, Initiative |
-| Initiative Knowledge Coverage | Program, Initiative, Knowledge Asset Count, Approved Asset Count, Next Review Date |
+| Knowledge Asset Register | `Knowledge[knowledge_id]`, `Knowledge[title]`, `Knowledge[knowledge_type]`, `Programs[program_name]`, `Initiatives[initiative_name]`, `Knowledge[owner]`, `Knowledge[status]`, `Knowledge[source_authority]`, `Knowledge[review_date]`, `Knowledge[document_link]`, `Knowledge[tags]` |
+| Assets Due For Review | `Knowledge[title]`, `Knowledge[knowledge_type]`, `Knowledge[owner]`, `Knowledge[status]`, `Knowledge[source_authority]`, `Knowledge[review_date]`, `Programs[program_name]`, `Initiatives[initiative_name]` |
+| Initiative Knowledge Coverage | `Programs[program_name]`, `Initiatives[initiative_name]`, count of `Knowledge[knowledge_id]`, count filtered to `Knowledge[status] = "Approved"`, minimum future `Knowledge[review_date]` |
 
 ## Measures Used
 
@@ -668,10 +692,10 @@ Do not use operational measures such as `Open Risks`, `Open Commitments`, or Dim
 
 ## Drillthrough Behavior
 
-- Knowledge row -> Knowledge Detail.
-- Initiative row -> Initiative Detail.
-- Program row -> Program Detail.
-- Document link opens the SharePoint/knowledge document target when available.
+- `Knowledge[knowledge_id]` row -> Knowledge Detail.
+- `Initiatives[initiative_name]` row -> Initiative Detail.
+- `Programs[program_name]` row -> Program Detail.
+- `Knowledge[document_link]` opens the SharePoint/knowledge document target when available.
 
 ## Warnings/Limitations
 
@@ -679,13 +703,14 @@ Do not use operational measures such as `Open Risks`, `Open Commitments`, or Dim
 - Knowledge lifecycle status is separate from operational status.
 - Do not combine Draft/Approved/Archived into the operational status dimension.
 - Some Knowledge assets may have blank Initiative references for organization-wide assets; handle these separately rather than forcing artificial Initiative links.
+- `Knowledge[owner]` filters Knowledge visuals only in MVP.
 
 ## AI Summary Input Fields
 
-- Knowledge title, type, status, source authority
-- Owner and review date
-- Program and Initiative context
-- Tags and document link
+- `Knowledge[title]`, `Knowledge[knowledge_type]`, `Knowledge[status]`, `Knowledge[source_authority]`
+- `Knowledge[owner]` and `Knowledge[review_date]`
+- `Programs[program_name]` and `Initiatives[initiative_name]`
+- `Knowledge[tags]` and `Knowledge[document_link]`
 - Related Initiative risks, dependencies, and commitments only when the relationship path is clear
 
 AI may summarize knowledge coverage and review needs. It should not infer document quality or policy approval beyond the stored Knowledge fields.
@@ -702,6 +727,7 @@ AI may summarize knowledge coverage and review needs. It should not infer docume
 - Do not merge Knowledge status with operational status.
 - Avoid bidirectional filters unless a specific report requirement proves they are necessary.
 - Use source fields for lineage, not as relationship keys in the core model.
+- MVP owner fields are object-specific. Cross-object owner filtering requires a future conformed `Dim Owner` table.
 
 ---
 
