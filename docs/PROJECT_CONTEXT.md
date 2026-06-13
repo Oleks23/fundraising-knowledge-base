@@ -302,6 +302,11 @@ Blocked Planner Task
 SharePoint SOP
 → Knowledge
 
+The canonical model is stable.
+
+CRM mappings are implementation-specific.
+
+No source-system object has a guaranteed one-to-one relationship with a canonical object.
 ---
 
 # Data Principles
