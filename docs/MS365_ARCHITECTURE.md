@@ -4,17 +4,17 @@
 
 ## Microsoft 365 Architecture
 
-Version: 1.0
+Version: 2.0
 
 ---
 
 # Purpose
 
-This document defines the Microsoft 365 architecture used to implement the Fundraising Command Centre.
+This document defines the Microsoft 365 architecture used to implement the Fundraising Command Centre (FCC).
 
-The architecture is designed around the FCC Canonical Data Model and Mapping Methodology.
+The architecture supports the FCC Canonical Data Model and serves as the reference implementation for the MVP.
 
-FCC is implemented as an operational intelligence layer above CRM, planning, fundraising, and collaboration systems.
+FCC is implemented as an operational intelligence layer above CRM systems, planning tools, fundraising platforms, and knowledge repositories.
 
 ---
 
@@ -36,7 +36,7 @@ FCC does not replace CRM.
 
 ## Principle 2
 
-Planning systems remain the source of task truth.
+Task and project management systems remain the source of activity truth.
 
 Examples:
 
@@ -45,7 +45,7 @@ Examples:
 * Smartsheet
 * Microsoft Project
 
-FCC does not replace project management tools.
+FCC does not replace task management systems.
 
 ---
 
@@ -68,51 +68,71 @@ FCC manages:
 
 ## Principle 4
 
-Activity data is consumed, not duplicated.
+Activities are consumed, not duplicated.
 
 Activities remain in source systems.
 
-FCC uses activity data to calculate:
+FCC uses activity information to calculate:
 
 * readiness
-* compliance
+* follow-up compliance
 * risk
-* workload
-* follow-up discipline
+* accountability
+* workload indicators
 
 ---
 
-# Architecture Overview
+## Principle 5
+
+Power BI is the primary user experience.
+
+SharePoint stores operational data.
+
+Power Automate manages operational logic.
+
+Power BI presents operational intelligence.
+
+---
+
+# Architectural Overview
 
 ```text
-CRM Systems
+Source Systems
+--------------------------------
+
+CRM
 (RE NXT, Salesforce)
 
-Planning Systems
+Planning
 (Planner, Asana, Smartsheet)
 
-Knowledge Sources
+Knowledge
 (SharePoint, Teams)
 
-              ↓
+Finance
+(Excel, ERP exports)
 
-      Data Ingestion Layer
+            ↓
 
-              ↓
+Data Ingestion Layer
 
-      FCC Operational Layer
+            ↓
 
-              ↓
+FCC Operational Layer
 
-      Metrics & Rules Layer
+            ↓
 
-              ↓
+Rules & Intelligence Layer
 
-      Power BI
+            ↓
 
-              ↓
+Power BI Command Centre
 
-      Teams & AI Summaries
+            ↓
+
+Teams Notifications
+AI Summaries
+Management Reviews
 ```
 
 ---
@@ -121,7 +141,9 @@ Knowledge Sources
 
 ## SharePoint
 
-Primary operational datastore.
+Purpose:
+
+Operational data platform.
 
 Stores:
 
@@ -130,43 +152,37 @@ Stores:
 * Commitments
 * Dependencies
 * Risks
-* Configuration
+* Knowledge Metadata
 * Metric Snapshots
+* Configuration
 
 ---
 
-## Document Libraries
-
-### Data Drop
+## SharePoint Document Libraries
 
 Purpose:
 
-Store imported files.
+Store imported files and knowledge assets.
+
+---
+
+### Data Drop Library
+
+Stores imported operational files.
 
 Examples:
 
 * RE NXT exports
-* Salesforce exports
 * Planner exports
-* Excel uploads
-
-Structure:
-
-Data Drop
-CRM
-Planning
-Finance
-Other
+* Smartsheet exports
+* Finance files
+* External reference files
 
 ---
 
 ### Knowledge Library
 
-Purpose:
-
-Store operational knowledge assets.
-
-Examples:
+Stores:
 
 * SOPs
 * Policies
@@ -174,6 +190,7 @@ Examples:
 * Templates
 * Post-Mortems
 * Lessons Learned
+* Decision Logs
 
 ---
 
@@ -181,16 +198,18 @@ Examples:
 
 Purpose:
 
-Transform data into operational intelligence.
+Transform source-system information into operational intelligence.
 
 Responsibilities:
 
-* Data ingestion
-* Readiness scoring
-* Risk generation
-* Alert generation
-* Snapshot creation
-* Weekly digest preparation
+* file ingestion
+* data validation
+* readiness calculations
+* commitment monitoring
+* dependency monitoring
+* risk generation
+* snapshot creation
+* notification delivery
 
 ---
 
@@ -198,9 +217,18 @@ Responsibilities:
 
 Purpose:
 
-Operational visibility.
+Primary Command Centre experience.
 
-Power BI is the primary user interface.
+Power BI provides:
+
+* executive visibility
+* operational management
+* portfolio monitoring
+* readiness monitoring
+* risk management
+* accountability reporting
+
+Power BI is the primary FCC interface.
 
 ---
 
@@ -213,87 +241,93 @@ Operational review and action.
 Teams receives:
 
 * alerts
-* digests
+* weekly digests
 * escalation notices
-* review materials
+* review packages
+
+Teams supports management cadence rather than data storage.
 
 ---
 
-# SharePoint Lists
+# Operational Data Layer
+
+FCC-owned records.
+
+---
 
 ## Programs
-
-Stores strategic fundraising areas.
 
 Examples:
 
 * Annual Giving
 * Major Gifts
-* Events
 * Stewardship
+* Events
 
 ---
 
 ## Initiatives
 
-Stores operational work portfolios.
-
 Examples:
 
 * Spring Appeal
-* Year-End Appeal
-* Annual Gala
 * Principal Gifts Portfolio
+* Annual Gala
+* Impact Reporting Cycle
 
 ---
 
 ## Commitments
 
-Stores operational obligations.
-
 Examples:
 
-* proposal due
-* stewardship report
-* launch milestone
-* sponsor benefit delivery
+* Proposal Due
+* Donor Follow-Up
+* Campaign Launch Date
+* Stewardship Report
 
 ---
 
 ## Dependencies
 
-Stores operational blockers.
-
 Examples:
 
-* finance approval
-* legal review
-* website deployment
+* Finance Approval
+* CEO Approval
+* Legal Review
+* Website Deployment
 
 ---
 
 ## Risks
 
-Stores identified risks.
-
 Examples:
 
-* stalled prospects
-* overdue commitments
-* launch readiness concerns
+* Stalled Prospect
+* Launch Delay
+* Missing Approval
+* Resource Constraint
+
+---
+
+## Knowledge Metadata
+
+Stores document references.
+
+Documents remain in SharePoint libraries.
 
 ---
 
 ## Metric Snapshots
 
-Stores periodic calculations.
+Stores calculated historical metrics.
 
 Examples:
 
-* readiness score
-* pipeline coverage
-* follow-up compliance
-* risk score
+* Readiness Score
+* Follow-Up Compliance
+* Open Risks
+* Open Commitments
 
 ---
 
@@ -302,73 +336,170 @@ Examples:
 Stores:
 
 * thresholds
-* scoring weights
-* escalation rules
 * SLA definitions
+* readiness weights
+* escalation rules
 
 ---
 
-# Data Ingestion Strategy
+# Source Activity Strategy
 
-Phase 1:
-
-CSV-based ingestion.
-
-Supported sources:
-
-* RE NXT exports
-* Planner exports
-* Excel uploads
-
-No API integrations required.
-
----
-
-# Activity Integration Strategy
-
-FCC does not maintain a master activity table.
+Activities are not FCC-owned objects.
 
 Activities remain in source systems.
 
-Examples:
+---
 
-Relationship Activities
+## Relationship Activities
+
+Typical Sources:
 
 * RE NXT Actions
 * Salesforce Tasks
 
-Operational Activities
+Examples:
 
-* Planner Tasks
-* Asana Tasks
-* Smartsheet Tasks
-
-FCC consumes activity information to generate:
-
-* Commitments
-* Risks
-* Readiness indicators
-* Compliance metrics
+* donor meeting
+* qualification call
+* stewardship visit
+* proposal discussion
 
 ---
 
-# Rules Layer
+## Operational Activities
 
-The Rules Layer creates operational intelligence.
+Typical Sources:
+
+* Planner
+* Asana
+* Smartsheet
+* Project
 
 Examples:
 
-No activity for 90 days
-→ Stalled Prospect Risk
+* segmentation approval
+* creative review
+* venue booking
+* website deployment
 
-Proposal overdue
-→ Commitment Alert
+---
 
-Missing readiness item
-→ Readiness Reduction
+## FCC Usage
 
-Blocked dependency
-→ Operational Risk
+Activities may contribute to:
+
+* readiness scoring
+* commitment monitoring
+* compliance monitoring
+* risk generation
+
+Activities are source data.
+
+Not FCC-managed records.
+
+---
+
+# Data Ingestion Layer
+
+## MVP Strategy
+
+CSV-based ingestion.
+
+Purpose:
+
+Reduce complexity and implementation effort.
+
+Supported Sources:
+
+* RE NXT exports
+* Planner exports
+* Excel files
+* Smartsheet exports
+
+API integrations are not required for MVP.
+
+---
+
+# Rules & Intelligence Layer
+
+The Rules Layer is the operational brain of FCC.
+
+Rules transform source data into management intelligence.
+
+---
+
+## Examples
+
+### Stalled Prospect
+
+Rule:
+
+No completed action within 90 days
+
+Creates:
+
+Risk
+
+---
+
+### Missing Next Action
+
+Rule:
+
+Active opportunity
+AND
+No future action
+
+Creates:
+
+Risk
+
+---
+
+### Overdue Commitment
+
+Rule:
+
+Due date passed
+AND
+Status not complete
+
+Creates:
+
+Alert
+
+---
+
+### Readiness Decline
+
+Rule:
+
+Readiness score below threshold
+
+Creates:
+
+Risk
+
+---
+
+# Power BI Architecture
+
+Power BI consumes:
+
+* SharePoint Lists
+* Metric Snapshots
+* Imported operational data
+
+Power BI should not rely directly on raw CRM structures.
+
+The semantic model is built around:
+
+* Programs
+* Initiatives
+* Commitments
+* Dependencies
+* Risks
+* Metrics
 
 ---
 
@@ -394,7 +525,7 @@ Readiness monitoring.
 
 ## Dependencies & Risks
 
-Blockers and risk management.
+Blocker and risk management.
 
 ---
 
@@ -406,33 +537,33 @@ Accountability monitoring.
 
 ## Knowledgebase
 
-Operational knowledge management.
+Knowledge management and discovery.
 
 ---
 
-# AI Layer
+# AI Architecture
 
 AI receives:
 
 * Metric Snapshots
 * Risks
+* Dependencies
 * Commitments
-* Readiness Scores
 
-AI does not calculate KPIs.
+AI does not calculate metrics.
 
 AI provides:
 
-* weekly digest
-* executive briefing
-* readiness narrative
-* risk summary
+* executive briefings
+* readiness summaries
+* risk summaries
+* weekly digests
+
+Power BI remains the calculation engine.
 
 ---
 
-# Security Model
-
-CRM remains system of record.
+# Security & Governance
 
 FCC minimizes donor PII.
 
@@ -440,50 +571,68 @@ Store:
 
 * source system
 * source record ID
-* owner
-* status
 * dates
+* ownership
+* statuses
 * metrics
 
 Avoid:
 
-* detailed donor notes
-* contact information
-* sensitive donor information
+* donor notes
+* personal contact information
+* unnecessary sensitive information
+
+CRM remains the donor system of record.
 
 ---
 
 # MVP Scope
 
-Phase 1 includes:
+Included:
 
 * SharePoint Lists
-* Document Libraries
-* CSV imports
+* SharePoint Libraries
+* CSV ingestion
+* RE NXT reference implementation
 * Power Automate
 * Power BI
 * Teams integration
 * AI summaries
 
-Phase 1 excludes:
+Excluded:
 
 * write-back to CRM
-* custom application development
-* multi-CRM integration framework
-* standalone SaaS platform
+* API integrations
+* SaaS platform
+* Dataverse architecture
+* predictive analytics
 
 ---
 
 # Future Architecture
 
-Future versions may support:
+Potential future enhancements:
 
-* live API integrations
-* Salesforce
 * RE NXT SKY API
+* Salesforce APIs
+* Planner APIs
 * Dataverse
 * Copilot Studio
-* standalone SaaS deployment
+* FCC SaaS Platform
 
-The Microsoft 365 implementation serves as the reference architecture for all future versions of FCC.
+These items are intentionally excluded from MVP.
 
+---
+
+# Success Criteria
+
+The architecture succeeds when leadership can answer:
+
+* What is at risk?
+* What is overdue?
+* What is blocked?
+* What requires intervention?
+
+within five minutes of opening the Executive Control Tower.
+
+The architecture should support multiple fundraising disciplines without requiring separate systems for each team.
