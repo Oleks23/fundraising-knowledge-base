@@ -162,6 +162,44 @@ Examples:
 * Lessons learned
 
 ---
+# Activity Management Principle
+
+FCC is not intended to replace CRM actions, task management systems, or project management tools.
+
+Fundraising teams already manage activities within operational systems such as:
+
+* RE NXT Actions
+* Salesforce Tasks
+* Planner Tasks
+* Asana Tasks
+* Smartsheet Tasks
+* Project Plans
+
+FCC consumes activity information from source systems and converts it into operational insights.
+
+Examples:
+
+Major Gifts
+
+* Actions remain in RE NXT.
+* FCC monitors follow-up compliance, pipeline health, and stalled opportunities.
+
+Stewardship
+
+* Reporting activities remain in RE NXT, Planner, or SharePoint workflows.
+* FCC monitors commitment completion and overdue obligations.
+
+Direct Response
+
+* Activities remain in Planner, Asana, Smartsheet, or Project.
+* FCC monitors readiness, dependencies, and launch risk.
+
+Events
+
+* Activities remain in project management tools.
+* FCC monitors readiness, dependencies, sponsor commitments, and operational risks.
+
+FCC is therefore an operational oversight platform rather than a task management platform.
 
 # Core User Interfaces
 
