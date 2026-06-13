@@ -2,7 +2,7 @@
 
 # Fundraising Command Centre (FCC)
 
-Version: 1.0
+Version: 1.1
 
 ---
 
@@ -30,7 +30,7 @@ Provision the following SharePoint Lists:
 | `dependencies_template.csv` | Dependencies | Blockers, prerequisites, and cross-functional dependencies. |
 | `risks_template.csv` | Risks | Manual or system-generated operational risks. |
 | `knowledge_template.csv` | Knowledge | Metadata for operational knowledge assets. |
-| `metric_snapshots_template.csv` | Metric Snapshots | Historical calculated management metrics. |
+| `metric_snapshots_template.csv` | Metric Snapshots | Historical calculated management metrics and approved placeholders. |
 | `configuration_template.csv` | Configuration | Client-specific settings, thresholds, weights, and escalation rules. |
 
 Provision the following SharePoint Document Libraries:
@@ -39,6 +39,22 @@ Provision the following SharePoint Document Libraries:
 | --- | --- |
 | Data Drop | Stores imported source-system files. |
 | Knowledge Library | Stores SOPs, policies, playbooks, templates, post-mortems, and decision logs. |
+
+---
+
+# Choice Values
+
+Choice values listed in this plan are MVP implementation defaults. They are not canonical model definitions.
+
+The canonical model defines the objects and required attributes. Client-specific choice values, source mappings, thresholds, and scoring rules should be reviewed through the CRM Mapping Workbook and adjusted in provisioning/configuration assets as implementation matures.
+
+---
+
+# Source Field Standard
+
+CSV files use `source_system` and `source_record_id` consistently for source traceability.
+
+Some SharePoint display labels may use the shorter label `Source`. In those cases, the CSV import field remains `source_system`, and import/provisioning logic should map `source_system` to the SharePoint display column.
 
 ---
 
@@ -89,16 +105,12 @@ CSV template: `programs_template.csv`
 | `start_date` | Start Date | Date | No |
 | `end_date` | End Date | Date | No |
 
-Suggested choices:
+Suggested MVP choices:
 
 - Program Type: Annual Giving, Major Gifts, Events, Stewardship, Corporate Partnerships, Capital Campaign, Other
 - Status: Active, Inactive
 
-Recommended indexes:
-
-- Program ID
-- Program Name
-- Status
+Recommended indexes: Program ID, Program Name, Status.
 
 ---
 
@@ -123,19 +135,13 @@ CSV template: `initiatives_template.csv`
 | `source_system` | Source System | Choice | No |
 | `source_record_id` | Source Record ID | Single line text | No |
 
-Suggested choices:
+Suggested MVP choices:
 
 - Initiative Type: Portfolio, Appeal, Event, Program Cycle, Campaign, Other
 - Status: Active, Complete, On Hold, At Risk
 - Source System: RE NXT, Salesforce, Planner, Asana, Smartsheet, Excel, Manual, Other
 
-Recommended indexes:
-
-- Initiative ID
-- Program
-- Status
-- Owner
-- Source System
+Recommended indexes: Initiative ID, Program, Status, Owner, Source System.
 
 ---
 
@@ -159,22 +165,15 @@ CSV template: `commitments_template.csv`
 | `escalation_level` | Escalation Level | Choice | No |
 | `notes` | Notes | Multiple lines text | No |
 
-Suggested choices:
+Suggested MVP choices:
 
 - Commitment Type: Donor Follow-Up, Proposal, Stewardship, Operational, Executive Briefing, Vendor, Other
-- Status: Open, In Progress, Completed, Overdue
+- Status: Open, Completed, Overdue
 - Priority: Low, Medium, High
 - Source System: RE NXT, RE NXT Actions, Salesforce, Planner, Asana, Smartsheet, Excel, Manual, Power Automate, Other
 - Escalation Level: None, Manager, Director
 
-Recommended indexes:
-
-- Commitment ID
-- Initiative
-- Due Date
-- Status
-- Owner
-- Priority
+Recommended indexes: Commitment ID, Initiative, Due Date, Status, Owner, Priority.
 
 ---
 
@@ -197,7 +196,7 @@ CSV template: `dependencies_template.csv`
 | `impact_description` | Impact Description | Multiple lines text | No |
 | `resolution_notes` | Resolution Notes | Multiple lines text | No |
 
-Suggested choices:
+Suggested MVP choices:
 
 - Dependency Type: Approval, Resource, Technology, Vendor, Review, Finance, Legal, Other
 - Blocking Area: Finance, Legal, Marketing, Leadership, Prospect Research, IT, Operations, External Vendor, Other
@@ -205,13 +204,7 @@ Suggested choices:
 - Status: Open, Resolved
 - Severity: Low, Medium, High
 
-Recommended indexes:
-
-- Dependency ID
-- Initiative
-- Status
-- Severity
-- Due Date
+Recommended indexes: Dependency ID, Initiative, Status, Severity, Due Date.
 
 ---
 
@@ -235,24 +228,15 @@ CSV template: `risks_template.csv`
 | `source_record_id` | Source Record ID | Single line text | No |
 | `mitigation_plan` | Mitigation Plan | Multiple lines text | No |
 
-Note: the CSV uses `source_system` for consistency with other templates. The SharePoint design names this column `Source`.
-
-Suggested choices:
+Suggested MVP choices:
 
 - Risk Type: Pipeline, Operational, Data Quality, Staffing, Readiness, Follow-Up, Commitment, Dependency, Governance, Other
 - Severity: Low, Medium, High
 - Likelihood: Low, Medium, High
 - Status: Open, Monitoring, Resolved
-- Source: RE NXT, RE NXT Actions, Salesforce, Planner, Asana, Smartsheet, Manual, Power Automate, Other
+- Source System: RE NXT, RE NXT Actions, Salesforce, Planner, Asana, Smartsheet, Manual, Power Automate, Other
 
-Recommended indexes:
-
-- Risk ID
-- Initiative
-- Severity
-- Status
-- Date Identified
-- Owner
+Recommended indexes: Risk ID, Initiative, Severity, Status, Date Identified, Owner.
 
 ---
 
@@ -273,19 +257,13 @@ CSV template: `knowledge_template.csv`
 | `document_link` | Document Link | Hyperlink | No |
 | `tags` | Tags | Managed metadata or text | No |
 
-Suggested choices:
+Suggested MVP choices:
 
 - Knowledge Type: SOP, Policy, Playbook, Template, Checklist, Lesson Learned, Post-Mortem, Decision Log, Other
 - Status: Draft, Approved, Archived
 - Source Authority: Working, Approved, Official
 
-Recommended indexes:
-
-- Knowledge ID
-- Status
-- Review Date
-- Owner
-- Initiative
+Recommended indexes: Knowledge ID, Status, Review Date, Owner, Initiative.
 
 ---
 
@@ -299,26 +277,30 @@ CSV template: `metric_snapshots_template.csv`
 | `snapshot_date` | Snapshot Date | Date | Yes |
 | `initiative` | Initiative | Lookup to Initiatives | No |
 | `metric_name` | Metric Name | Choice or single line text | Yes |
-| `metric_value` | Metric Value | Number | Yes |
+| `metric_value` | Metric Value | Number | No |
 | `metric_unit` | Metric Unit | Choice | No |
 | `threshold_status` | Threshold Status | Choice | No |
-| `source` | Source | Choice | No |
+| `source_system` | Source | Choice | No |
 | `notes` | Notes | Multiple lines text | No |
 
-Suggested choices:
+Suggested MVP metric names:
 
-- Metric Name: Readiness Score, Open Risks, Critical Risks, Open Commitments, Overdue Commitments, Follow-Up Compliance, Dependency Count, Open Dependencies, Commitment Completion Rate, Pipeline Coverage
+- open_commitments_count
+- overdue_commitments_count
+- open_dependencies_count
+- high_risks_count
+- commitment_compliance_placeholder
+- follow_up_compliance_placeholder
+
+Readiness score snapshots may be added only when supplied as an approved config input, checklist result, or future rule output. Sprint 1 provisioning should not assume a readiness calculation formula.
+
+Suggested MVP choices:
+
 - Metric Unit: Count, Percent, Score, Currency, Days
-- Threshold Status: Healthy, Good, Warning, Critical
-- Source: Power Automate, Power BI, Manual, Import, Other
+- Threshold Status: Healthy, Good, Warning, Critical, Not Evaluated
+- Source System: Power Automate, Power BI, Manual, Import, Other
 
-Recommended indexes:
-
-- Snapshot ID
-- Snapshot Date
-- Initiative
-- Metric Name
-- Threshold Status
+Recommended indexes: Snapshot ID, Snapshot Date, Initiative, Metric Name, Threshold Status.
 
 ---
 
@@ -336,17 +318,12 @@ CSV template: `configuration_template.csv`
 | `status` | Status | Choice | Yes |
 | `notes` | Notes | Multiple lines text | No |
 
-Suggested choices:
+Suggested MVP choices:
 
 - Config Area: Follow-Up SLA, Risk Thresholds, Readiness Weights, Escalation Rules, Snapshot Rules, Source Mapping, Other
 - Status: Active, Inactive
 
-Recommended indexes:
-
-- Config ID
-- Config Area
-- Config Name
-- Status
+Recommended indexes: Config ID, Config Area, Config Name, Status.
 
 ---
 
@@ -362,7 +339,7 @@ At minimum, require:
 | Dependencies | Dependency ID, Dependency Name, Initiative, Dependency Type, Status, Severity |
 | Risks | Risk ID, Risk Name, Initiative, Risk Type, Severity, Likelihood, Status, Date Identified |
 | Knowledge | Knowledge ID, Title, Knowledge Type, Status |
-| Metric Snapshots | Snapshot ID, Snapshot Date, Metric Name, Metric Value |
+| Metric Snapshots | Snapshot ID, Snapshot Date, Metric Name |
 | Configuration | Config ID, Config Area, Config Name, Config Value, Status |
 
 Person fields should not be required in the MVP because imported CSV data may contain display names that require later identity resolution.
@@ -402,7 +379,7 @@ Recommended approach:
 2. Create document libraries before data ingestion.
 3. Create base lists without lookup fields first.
 4. Add lookup fields after target lists exist.
-5. Add choice columns using controlled vocabularies from this plan.
+5. Add choice columns using MVP defaults, then adjust per approved mapping decisions.
 6. Add indexed columns for high-use filters and Power BI refresh stability.
 7. Add default views for operational use and data QA.
 8. Import seed data only after schema provisioning succeeds.
@@ -416,7 +393,7 @@ Potential PnP assets:
 | `sharepoint/pnp/import-seed-data.ps1` | Imports CSV data and resolves lookups. |
 | `sharepoint/pnp/README.md` | Operational instructions for tenant admins. |
 
-Provisioning should use internal field names that are stable and CSV-compatible where practical, for example `ProgramID`, `InitiativeID`, and `SourceRecordID`. Display names can remain user-friendly.
+Provisioning should use internal field names that are stable and CSV-compatible where practical, for example `ProgramID`, `InitiativeID`, `SourceSystem`, and `SourceRecordID`. Display names can remain user-friendly.
 
 ---
 
@@ -426,11 +403,11 @@ Provisioning should use internal field names that are stable and CSV-compatible 
 | --- | --- |
 | Single line text | Use for stable FCC IDs, names, and source record IDs. |
 | Multiple lines text | Use plain text unless rich text is explicitly required. |
-| Choice | Define allowed values in provisioning assets and avoid free-form drift. |
+| Choice | Define MVP defaults in provisioning assets and avoid free-form drift. |
 | Person | Allow optional values during MVP imports; resolve display names after ingestion if needed. |
 | Date | Use date-only values for CSV imports unless time is required later. |
 | Currency | Use tenant/default currency unless client-specific requirements exist. |
-| Number | Use for scores, counts, percentages, and metric values. |
+| Number | Use for scores, counts, percentages, and metric values. Allow blanks for explicit placeholders. |
 | Hyperlink | Use for Knowledge document links. |
 | Lookup | Add after target list creation; do not create circular lookup paths. |
 | Managed metadata | Defer unless the tenant taxonomy is known; use text tags for MVP if needed. |
@@ -462,7 +439,13 @@ Before importing CSV data into SharePoint, run:
 python scripts/validate_fcc_csvs.py
 ```
 
-The validator checks required columns, missing IDs, date formats, status values, and broken Program or Initiative references in the sample data.
+To validate generated overlay data, run:
+
+```bash
+python scripts/validate_fcc_csvs.py --input-dir data/operational_overlay
+```
+
+The validator checks required columns, missing IDs, date formats, status values, and broken Program or Initiative references.
 
 ---
 
