@@ -1,140 +1,70 @@
 # CRM_MAPPING_WORKBOOK.md
 
-# Fundraising Command Centre (FCC)
+# Fundraising Command Centre
 
 ## CRM Mapping Workbook
 
-Version: 2.0
+Version 2.0
 
 ---
 
 # Purpose
 
-This document defines the process used to translate source-system data into the FCC Canonical Data Model.
+This workbook documents how a client's operational reality is translated into the FCC Canonical Data Model.
 
-The purpose of the workbook is not to force a CRM into a predefined structure.
+The purpose is not to map CRM objects directly.
 
-The purpose is to understand how the organization operates and then map that operational reality into FCC.
+The purpose is to identify:
 
----
+* Programs
+* Initiatives
+* Dependencies
+* Commitments
+* Risks
+* Knowledge
 
-# Core Principle
+that the organization needs to manage.
 
-The Canonical Model is stable.
-
-Source systems are variable.
-
-Different organizations use the same CRM objects differently.
-
-Therefore:
-
-```text
-Source Object
-≠
-Canonical Object
-```
-
-There is no guaranteed one-to-one relationship.
-
-Mappings must be explicitly documented.
-
----
-
-# FCC Canonical Model
-
-FCC manages:
-
-```text
-Program
-Initiative
-Commitment
-Dependency
-Risk
-Knowledge
-```
-
-Supporting objects:
-
-```text
-Metric Snapshot
-Alert
-Configuration
-Data Quality Issue
-```
-
-Activities remain within source systems.
+CRM data is one source of information used to build that model.
 
 ---
 
 # Mapping Methodology
 
-Every implementation follows the same sequence.
+## Step 1
 
-```text
-Understand Operations
-        ↓
-Identify Programs
-        ↓
-Identify Initiatives
-        ↓
-Identify Commitments
-        ↓
-Identify Dependencies
-        ↓
-Identify Risks
-        ↓
-Identify Knowledge Assets
-        ↓
-Map Source Data
-        ↓
-Build Rules
-```
+Understand how the organization works.
+
+Not:
+
+"What objects exist?"
+
+Instead:
+
+"What work is being managed?"
 
 ---
 
-# Step 1
+## Step 2
 
-## Operational Assessment
-
-Before reviewing CRM objects, document how the organization works.
-
-Questions:
-
-* What fundraising functions exist?
-* How is work organized?
-* How is accountability managed?
-* How is readiness monitored?
-* How are risks identified?
-* How are commitments tracked?
-
----
-
-# Step 2
-
-## Program Identification
-
-Programs represent strategic fundraising areas.
+Identify Programs.
 
 Examples:
 
 * Annual Giving
 * Major Gifts
-* Stewardship
 * Events
 * Corporate Partnerships
+* Stewardship
 * Capital Campaign
 
-Programs are typically leadership-defined constructs.
-
-Programs often do not exist as CRM objects.
+Programs become the highest operational layer.
 
 ---
 
-# Step 3
+## Step 3
 
-## Initiative Identification
-
-Initiatives represent operational work portfolios.
+Identify Initiatives.
 
 Examples:
 
@@ -144,314 +74,384 @@ Annual Giving
 * Giving Tuesday
 * Year-End Appeal
 
-Major Gifts
-
-* Principal Gifts Portfolio
-* Leadership Gifts Portfolio
-
 Events
 
 * Annual Gala
 * Golf Tournament
 
+Major Gifts
+
+* Principal Gifts Portfolio
+* Leadership Gifts Portfolio
+
 Stewardship
 
+* Foundation Reporting Program
 * Impact Reporting Cycle
 
 ---
 
-# Step 4
+## Step 4
 
-## Source Activity Assessment
-
-Activities remain in source systems.
-
-FCC consumes activities but does not manage them.
-
----
-
-## Relationship Activities
+Identify Activities.
 
 Examples:
 
-* donor meetings
-* qualification calls
-* stewardship visits
-* proposal discussions
-
-Typical Sources:
-
-* RE NXT Actions
-* Salesforce Tasks
+* Approve segmentation
+* Prepare proposal
+* Conduct donor meeting
+* Finalize sponsorship package
+* Review impact report
 
 ---
 
-## Operational Activities
+## Step 5
+
+Identify Commitments.
 
 Examples:
 
-* segmentation approval
-* venue booking
-* creative review
-* website deployment
-
-Typical Sources:
-
-* Planner
-* Asana
-* Smartsheet
-* Microsoft Project
+* Proposal due
+* Donor follow-up
+* Stewardship report
+* Sponsor benefit delivery
+* Campaign launch date
 
 ---
+
+## Step 6
+
+Identify Dependencies.
+
+Examples:
+
+* Finance approval
+* Legal review
+* Website deployment
+* Prospect research
+
+---
+
+## Step 7
+
+Identify Risks.
+
+Examples:
+
+* Stalled prospects
+* Missing readiness items
+* Data quality issues
+* Delayed approvals
+
+---
+
+# Program Mapping
+
+Document how source-system objects contribute to Programs.
+
+Programs are usually not sourced from a single CRM object.
+
+Example:
+
+Program
+
+Annual Giving
+
+Source Inputs
+
+* Campaigns
+* Appeals
+* Funds
+* Budget Structure
+
+---
+
+# Initiative Mapping
+
+Document how Initiatives are identified.
+
+Examples:
+
+Annual Giving
+
+Source
+
+Appeals
+
+Examples
+
+* Spring Appeal
+* Year-End Appeal
+
+Events
+
+Source
+
+Events Calendar
+
+Examples
+
+* Annual Gala
+* Golf Tournament
+
+Major Gifts
+
+Source
+
+Portfolio Structure
+
+Examples
+
+* Principal Gifts
+* Leadership Gifts
+
+---
+
+# Source Activity Assessment
+
+Activities are not treated as FCC-owned core objects.
+
+Activities usually remain in their source systems, such as:
+
+- RE NXT Actions
+- Salesforce Tasks
+- Planner Tasks
+- Asana Tasks
+- Smartsheet Tasks
+- Microsoft Project tasks
+
+FCC consumes activity data to evaluate execution, follow-up discipline, readiness, dependencies, and risk.
+
+## Activity Types
+
+### Relationship Activities
+
+Examples:
+
+- Donor meeting
+- Qualification call
+- Proposal discussion
+- Stewardship visit
+- Follow-up call
+
+Typical sources:
+
+- RE NXT Actions
+- Salesforce Tasks
+
+### Operational Activities
+
+Examples:
+
+- Approve segmentation
+- Confirm finance coding
+- Finalize creative
+- Test donation page
+- Secure venue
+- Approve sponsorship package
+
+Typical sources:
+
+- Planner
+- Asana
+- Smartsheet
+- Microsoft Project
+- Excel
 
 ## Assessment Questions
 
-* Which systems manage activities?
-* Are activities consistently recorded?
-* Are due dates reliable?
-* Are owners reliable?
-* Are completion dates reliable?
-* Can activities support compliance monitoring?
-* Can activities support readiness calculations?
+- Which systems currently manage activities?
+- Are activities consistently recorded?
+- Are due dates reliable?
+- Are owners reliable?
+- Are completed dates reliable?
+- Are activity statuses reliable?
+- Can activities be linked to a Program or Initiative?
+- Can activities be used for follow-up compliance?
+- Can activities be used for readiness scoring?
+- Can activities be used to generate risks?
+- What activity data should remain read-only?
+- What activity data should be summarized into FCC metrics?
 
----
+## Mapping Guidance
 
-# Step 5
+Activities should not normally be recreated as FCC-owned records.
 
-## Commitment Identification
+Instead:
 
-Commitments are obligations.
+- Relationship activities remain in CRM.
+- Operational activities remain in planning tools.
+- FCC imports or references activity data.
+- FCC creates metrics, alerts, risks, and summaries from activity data.
 
-Examples:
+## Example
 
-* donor follow-up
-* proposal deadline
-* stewardship report
-* campaign launch milestone
-* sponsor benefit delivery
+RE NXT Action:
+
+- Action Type: Call
+- Constituent: Donor A
+- Assigned Solicitor: Sarah Mitchell
+- Due Date: 2026-07-15
+- Status: Not Completed
+
+FCC interpretation:
+
+- Source Activity
+- Used for follow-up compliance
+- May generate an overdue commitment alert
+- May contribute to a stalled prospect risk
+
+# Commitment Mapping
+
+Document operational obligations.
+
+Potential Sources
+
+* Opportunities
+* Proposals
+* Stewardship Plans
+* Event Deliverables
+* Vendor Agreements
 
 Important:
 
-Commitments may originate from:
+An Opportunity is not automatically a Commitment.
 
-* CRM
+Implementation review required.
+
+---
+
+# Activity Mapping
+
+Potential Sources
+
+* Actions
+* Tasks
 * Planner
-* Excel
-* Manual entry
-* Governance processes
+* Asana
+* Smartsheet
+* Manual Entry
+
+Activity quality assessment required.
 
 ---
 
-# Step 6
+# Dependency Mapping
 
-## Dependency Identification
+Potential Sources
 
-Dependencies are blockers.
+* Planner
+* Project Plans
+* Readiness Checklists
+* Manual Entry
 
-Examples:
+Dependencies are usually derived.
 
-* finance approval
-* legal review
-* website deployment
-* CEO approval
-* prospect research
-
-Dependencies rarely exist directly in CRM.
-
-Dependencies are often created through:
-
-* planning tools
-* readiness templates
-* manual entry
+Dependencies rarely exist in CRM.
 
 ---
 
-# Step 7
+# Risk Mapping
 
-## Risk Identification
+Potential Sources
 
-Risks threaten successful execution.
+* Operational Rules
+* Readiness Scores
+* Missing Activities
+* Missing Commitments
+* Data Quality Checks
 
-Examples:
+Risks are typically generated.
 
-* stalled opportunities
-* missing approvals
-* overdue commitments
-* staffing shortages
-* poor readiness
-
-Risks are frequently generated through rules.
+Risks are rarely imported.
 
 ---
 
-# Step 8
+# Knowledge Mapping
 
-## Knowledge Identification
+Potential Sources
 
-Knowledge assets preserve organizational memory.
-
-Examples:
-
-* SOPs
+* SharePoint
+* Teams
+* SOP Libraries
 * Policies
 * Playbooks
-* Templates
-* Lessons Learned
-* Post-Mortems
 
-Knowledge typically originates in Microsoft 365.
-
-Not CRM.
-
----
-
-# Source Systems Inventory
-
-Document all systems contributing to FCC.
-
-| System     | Purpose            | System of Record |
-| ---------- | ------------------ | ---------------- |
-| RE NXT     | CRM                | Yes              |
-| Salesforce | CRM                | Yes              |
-| Planner    | Task Management    | Yes              |
-| Asana      | Task Management    | Yes              |
-| Smartsheet | Project Management | Yes              |
-| SharePoint | Knowledge          | Yes              |
-| Excel      | Operational Data   | Sometimes        |
+Knowledge is usually managed entirely within Microsoft 365.
 
 ---
 
 # RE NXT Assessment
 
-The purpose of this section is not to map objects immediately.
-
-The purpose is to understand how RE NXT is used.
-
----
-
 ## Campaign Usage
 
-Questions:
+Document:
 
-* What does a Campaign represent?
-* Is Campaign used consistently?
-* Does Campaign align with Programs?
-* Does Campaign align with Initiatives?
-
-Document findings.
+* How campaigns are used
+* Whether campaigns represent Programs
+* Whether campaigns represent Initiatives
 
 ---
 
 ## Appeal Usage
 
-Questions:
+Document:
 
-* What does an Appeal represent?
-* Is Appeal managed consistently?
-* Does Appeal align with Initiatives?
+* Appeal hierarchy
+* Appeal reporting
+* Appeal ownership
 
-Document findings.
+Potential Initiative candidates.
 
 ---
 
 ## Opportunity Usage
 
-Questions:
+Document:
 
-* Are opportunities actively maintained?
-* Are ask dates reliable?
-* Are proposal dates reliable?
-* Are stages meaningful?
-* Do opportunities represent commitments?
+* Ask management process
+* Proposal process
+* Stage definitions
+* Forecasting process
 
-Document findings.
+Potential Commitment candidates.
 
 ---
 
 ## Action Usage
 
-Questions:
+Document:
 
-* Are actions consistently recorded?
-* Is next action required?
-* Are completion dates reliable?
-* Can actions support follow-up compliance?
+* Action discipline
+* Next-action compliance
+* Activity logging standards
 
-Document findings.
+Potential Activity candidates.
 
 ---
 
 ## Portfolio Usage
 
-Questions:
+Document:
 
-* How are portfolios managed?
-* How are assignments maintained?
-* Are portfolios reviewed regularly?
+* Portfolio ownership
+* Assignment rules
+* Portfolio review process
 
-Document findings.
-
----
-
-# Mapping Decision Worksheet
-
-## Program Mapping
-
-| FCC Program   | Source Data            | Notes |
-| ------------- | ---------------------- | ----- |
-| Annual Giving | Campaigns + Appeals    |       |
-| Major Gifts   | Portfolio Structure    |       |
-| Stewardship   | Operational Definition |       |
-
----
-
-## Initiative Mapping
-
-| FCC Initiative            | Source Data         | Notes |
-| ------------------------- | ------------------- | ----- |
-| Spring Appeal             | Appeal              |       |
-| Principal Gifts Portfolio | Portfolio Structure |       |
-| Annual Gala               | Event Planning Data |       |
-
----
-
-## Commitment Mapping
-
-| FCC Commitment | Source Data   | Notes |
-| -------------- | ------------- | ----- |
-| Proposal Due   | Opportunity   |       |
-| Follow-Up Due  | Action        |       |
-| Launch Date    | Planning Tool |       |
+Potential Initiative candidates.
 
 ---
 
 # Data Quality Assessment
 
-Evaluate source-system reliability.
+Assess:
 
-| Area          | High | Medium | Low | Notes |
-| ------------- | ---- | ------ | --- | ----- |
-| Campaigns     |      |        |     |       |
-| Appeals       |      |        |     |       |
-| Opportunities |      |        |     |       |
-| Actions       |      |        |     |       |
-| Portfolios    |      |        |     |       |
-| Planner Data  |      |        |     |       |
+* Completeness
+* Consistency
+* Timeliness
+* Reliability
 
----
-
-# Mapping Risks
-
-Document implementation concerns.
-
-Examples:
-
-* Opportunities not maintained
-* Missing next actions
-* Duplicate campaign structures
-* Inconsistent appeal naming
-* Missing ownership
-* Incomplete activity records
+before any mapping decisions are approved.
 
 ---
 
@@ -459,9 +459,9 @@ Examples:
 
 Mappings must be approved before:
 
-* SharePoint build
-* Power Automate build
-* Power BI semantic model build
+* SharePoint List design
+* Power Automate design
+* Power BI semantic model design
 * AI summary configuration
 
 Approved By:
@@ -472,25 +472,3 @@ Date:
 
 ---
 
-Version:
-
----
-
----
-
-# Success Criteria
-
-The Mapping Workbook succeeds when:
-
-* operational reality is understood
-* Programs are clearly defined
-* Initiatives are clearly defined
-* Commitments are clearly defined
-* Dependencies are clearly defined
-* Risks are clearly defined
-* Knowledge assets are identified
-* source-system assumptions are documented
-
-The objective is not CRM standardization.
-
-The objective is accurate operational translation into the FCC Canonical Model.

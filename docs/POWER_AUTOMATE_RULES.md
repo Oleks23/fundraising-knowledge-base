@@ -309,13 +309,19 @@ Measure Initiative readiness.
 
 ## Readiness Inputs
 
-Potential Components:
+Readiness is scored across five modules (see Readiness Score below):
 
-* Open Commitments
-* Overdue Commitments
-* Open Dependencies
-* Critical Risks
-* Milestone Completion
+* Prospect Coverage
+* Case for Support
+* Finance Setup
+* Marketing Assets
+* Stewardship Plan
+
+The operational signals that feed each module's score (open and
+overdue commitments, blocking dependencies, critical risks, milestone
+completion) are inputs to the per-module scores. How they roll up into
+each module score is an open question (see "Open implementation
+question" below).
 
 ---
 
@@ -325,18 +331,41 @@ Scale:
 
 0 – 100
 
-Example Weighting:
+Readiness is **module-weighted**. An Initiative's readiness is the
+weighted sum of its per-module scores, using these canonical weights:
 
-| Component    | Weight |
-| ------------ | ------ |
-| Commitments  | 35%    |
-| Dependencies | 25%    |
-| Risks        | 25%    |
-| Milestones   | 15%    |
+| Module            | Weight |
+| ----------------- | ------ |
+| Prospect Coverage | 40%    |
+| Case for Support  | 20%    |
+| Finance Setup     | 15%    |
+| Marketing Assets  | 15%    |
+| Stewardship Plan  | 10%    |
+
+These weights are the single source of truth for readiness and are
+stored in the Configuration List (Config Area = "Readiness Weights"),
+so they can be tuned per client without code changes. The Power BI
+DAX measure and any synthetic data must use these same weights.
 
 Stored In:
 
 Metric Snapshots
+
+### Open implementation question — per-module scoring
+
+How each Initiative's individual module scores (e.g. its Prospect
+Coverage %) are produced is **deferred and not yet designed**. The
+weights are fixed; the inputs that roll up into each module score are
+not. This will be resolved during scenario validation. Until then:
+
+* Do not invent a "Readiness Category" field on Commitments,
+  Dependencies, or other records to make the math work.
+* Treat per-module scores as an input to be supplied (manually,
+  via a readiness checklist, or by a future rule), not as a
+  derivation that already exists in the model.
+
+Codex and implementers must not hardcode a module-scoring formula
+ahead of this decision.
 
 ---
 

@@ -102,6 +102,93 @@ Fact Metric Snapshots
 
 ---
 
+# Relationships
+
+The model is a star schema with one snowflake edge (Program sits behind Initiative). All relationships are single-direction unless stated. Facts filter from dimensions, never the reverse.
+
+| From (one)            | To (many)              | Key                | Direction | Notes                                  |
+| --------------------- | ---------------------- | ------------------ | --------- | -------------------------------------- |
+| Dim Program           | Dim Initiative         | Program Key        | Single    | Snowflake: Program → Initiative        |
+| Dim Initiative        | Fact Commitments       | Initiative Key     | Single    |                                        |
+| Dim Initiative        | Fact Dependencies      | Initiative Key     | Single    |                                        |
+| Dim Initiative        | Fact Risks             | Initiative Key     | Single    |                                        |
+| Dim Initiative        | Fact Metric Snapshots  | Initiative Key     | Single    | Initiative may be blank (org metrics)  |
+| Dim Owner             | Fact Commitments       | Owner Key          | Single    |                                        |
+| Dim Owner             | Fact Dependencies      | Owner Key          | Single    |                                        |
+| Dim Owner             | Fact Risks             | Owner Key          | Single    |                                        |
+| Dim Date              | Fact Commitments       | Due Date           | Single    | Marked as date table                   |
+| Dim Date              | Fact Dependencies      | Due Date           | Single    | Role-playing; see note                 |
+| Dim Date              | Fact Risks             | Date Identified    | Single    | Role-playing; see note                 |
+| Dim Date              | Fact Metric Snapshots  | Snapshot Date      | Single    |                                        |
+| Dim Commitment Type   | Fact Commitments       | Commitment Type    | Single    |                                        |
+| Dim Risk Type         | Fact Risks             | Risk Type          | Single    |                                        |
+| Dim Dependency Type   | Fact Dependencies      | Dependency Type    | Single    |                                        |
+| Dim Status            | Fact Commitments       | Status             | Single    | See shared-status note                 |
+| Dim Status            | Fact Dependencies      | Status             | Single    | See shared-status note                 |
+| Dim Status            | Fact Risks             | Status             | Single    | See shared-status note                 |
+
+## Program filtering (snowflake)
+
+Child facts hold an Initiative Key, not a Program Key. Program-level
+reporting works because a filter on Dim Program propagates to Dim
+Initiative, then to the facts. Do not add a direct Program-to-fact
+relationship; it would create an ambiguous path.
+
+## Date relationships
+
+Each fact has one active relationship to Dim Date on its primary
+business date (Commitments → Due Date, Risks → Date Identified,
+Snapshots → Snapshot Date). Where a second date matters (e.g.
+Dependency Due Date and a resolution date), model it with an inactive
+relationship activated by USERELATIONSHIP inside specific measures
+rather than a second date dimension.
+
+## Dim Status (shared dimension)
+
+Dim Status is a single conformed dimension. Its member set is the
+**union** of all entity statuses, with a Category column identifying
+which entities use each value:
+
+| Status Value | Applies To              |
+| ------------ | ----------------------- |
+| Open         | Commitment, Dependency, Risk |
+| In Progress  | Commitment              |
+| Completed    | Commitment              |
+| Overdue      | Commitment (derived)    |
+| Resolved     | Dependency, Risk        |
+| Monitoring   | Risk                    |
+
+Knowledge status (Draft / Approved / Archived) is **not** part of Dim
+Status. Knowledge uses its own Dim Knowledge Status, because its
+lifecycle vocabulary does not overlap with the operational entities.
+Mixing them into one dimension would offer meaningless cross-filters
+(e.g. "Approved Commitments").
+
+Note: "Overdue" is a derived state (Due Date in the past and status
+not Completed/Resolved), not a stored value. It may be computed as a
+DAX measure rather than stored, or materialized by the Rules Layer;
+the model treats it as derived.
+
+## Type dimensions are derived
+
+Dim Commitment Type, Dim Risk Type, and Dim Dependency Type are
+**not** separate SharePoint Lists. They are generated in Power Query
+from the distinct Choice values on the corresponding fact records.
+Build them with a reference query that selects the Type column,
+removes duplicates, and adds a surrogate key. They exist as
+dimensions for clean slicing, not as maintained reference data.
+
+## Keys: source IDs vs surrogate keys
+
+SharePoint Lists store natural identifiers (Program ID, Initiative ID,
+etc.) and lookups. The semantic model introduces surrogate **Keys**
+(Program Key, Initiative Key, Owner Key) generated in Power Query for
+relationship integrity. "ID" is the source-system/SharePoint value;
+"Key" is the model's internal surrogate. They are deliberately
+distinct and must not be conflated in DAX.
+
+---
+
 # Core Dimensions
 
 ## Dim Program
@@ -227,14 +314,21 @@ Examples:
 
 ## Dim Status
 
-Examples:
+A single conformed status dimension for the operational facts
+(Commitments, Dependencies, Risks). See the Relationships → Dim Status
+section for the authoritative member set and the Category column.
+
+Operational status values:
 
 * Open
-* Complete
-* Overdue
-* Blocked
+* In Progress
+* Completed
+* Overdue (derived)
 * Monitoring
 * Resolved
+
+Knowledge assets use a separate Dim Knowledge Status (Draft, Approved,
+Archived) and do not share this dimension.
 
 ---
 

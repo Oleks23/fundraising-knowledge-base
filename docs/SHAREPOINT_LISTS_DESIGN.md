@@ -87,6 +87,20 @@ Examples:
 * Follow-Up Compliance
 * Commitment Compliance
 
+---
+
+## Principle 6
+
+Child records link to Initiative only.
+
+Commitments, Dependencies, Risks, Knowledge, and Metric Snapshots
+carry a single Initiative lookup, not a Program lookup. The parent
+Program is always reached by following Initiative → Program. This
+keeps one authoritative parentage path and avoids a record whose
+stored Program disagrees with its Initiative's Program. Program-level
+reporting is produced in Power BI by letting filters flow from
+Program through Initiative to the child facts.
+
 # Core Lists
 
 ## 1. Programs
@@ -195,7 +209,6 @@ Key Columns:
 | ---------------- | --------------------- |
 | Commitment ID    | Single line text      |
 | Commitment Name  | Single line text      |
-| Program          | Lookup to Programs    |
 | Initiative       | Lookup to Initiatives |
 | Commitment Type  | Choice                |
 | Owner            | Person                |
@@ -225,20 +238,20 @@ Examples:
 
 Key Columns:
 
-| Column            | Type                  |
-| ----------------- | --------------------- |
-| Dependency ID     | Single line text      |
-| Dependency Name   | Single line text      |
-| Program           | Lookup to Programs    |
-| Initiative        | Lookup to Initiatives |
-| Blocking Area     | Choice                |
-| Impacted Area     | Choice                |
-| Owner             | Person                |
-| Due Date          | Date                  |
-| Status            | Choice                |
-| Severity          | Choice                |
-| Downstream Impact | Multiple lines text   |
-| Resolution Notes  | Multiple lines text   |
+| Column             | Type                  |
+| ------------------ | --------------------- |
+| Dependency ID      | Single line text      |
+| Dependency Name    | Single line text      |
+| Initiative         | Lookup to Initiatives |
+| Dependency Type    | Choice                |
+| Blocking Area      | Choice                |
+| Impacted Area      | Choice                |
+| Owner              | Person                |
+| Due Date           | Date                  |
+| Status             | Choice                |
+| Severity           | Choice                |
+| Impact Description | Multiple lines text   |
+| Resolution Notes   | Multiple lines text   |
 
 ---
 
@@ -262,7 +275,6 @@ Key Columns:
 | ---------------------- | --------------------- |
 | Risk ID                | Single line text      |
 | Risk Name              | Single line text      |
-| Program                | Lookup to Programs    |
 | Initiative             | Lookup to Initiatives |
 | Risk Type              | Choice                |
 | Severity               | Choice                |
@@ -303,7 +315,6 @@ Key Columns:
 | Knowledge ID     | Single line text         |
 | Title            | Single line text         |
 | Knowledge Type   | Choice                   |
-| Program          | Lookup to Programs       |
 | Initiative       | Lookup to Initiatives    |
 | Owner            | Person                   |
 | Status           | Choice                   |
@@ -311,6 +322,8 @@ Key Columns:
 | Review Date      | Date                     |
 | Document Link    | Hyperlink                |
 | Tags             | Managed metadata or text |
+
+The Initiative link is optional for Knowledge assets that apply organization-wide rather than to a single Initiative. Where present, the parent Program is inferred via the Initiative.
 
 ---
 
@@ -336,7 +349,6 @@ Key Columns:
 | ---------------- | --------------------- |
 | Snapshot ID      | Single line text      |
 | Snapshot Date    | Date                  |
-| Program          | Lookup to Programs    |
 | Initiative       | Lookup to Initiatives |
 | Metric Name      | Choice or text        |
 | Metric Value     | Number                |
@@ -344,6 +356,8 @@ Key Columns:
 | Threshold Status | Choice                |
 | Source           | Choice                |
 | Notes            | Multiple lines text   |
+
+The Initiative link is optional. A snapshot tied to an Initiative rolls up to its Program in Power BI via the Initiative relationship. A snapshot with no Initiative represents a Program-level or organization-wide metric; Program-level scoping for such snapshots is resolved in the semantic model, not by a stored Program lookup.
 
 ---
 # Rules-Generated Records
