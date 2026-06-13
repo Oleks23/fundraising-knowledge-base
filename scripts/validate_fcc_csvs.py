@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Validate FCC sample CSV files against header templates and core model rules."""
+"""Validate FCC CSV files against templates and core model rules."""
 
 from __future__ import annotations
 
+import argparse
 import csv
 import sys
 from dataclasses import dataclass
@@ -11,7 +12,7 @@ from pathlib import Path
 
 
 REPO_ROOT = Path(__file__).resolve().parents[1]
-SAMPLE_DIR = REPO_ROOT / "data" / "sample"
+DEFAULT_INPUT_DIR = REPO_ROOT / "data" / "sample"
 TEMPLATE_DIR = REPO_ROOT / "data" / "templates"
 
 ID_COLUMNS = {
@@ -36,21 +37,29 @@ DATE_COLUMNS = {
     "configuration.csv": ["effective_date"],
 }
 
+# Canonical status values come from CANONICAL_DATA_MODEL.md and
+# SHAREPOINT_LISTS_DESIGN.md. STATUS_ALIASES below are accepted only as import
+# normalization aliases; they should be normalized before production load.
 STATUS_VALUES = {
     "programs.csv": {"Active", "Inactive"},
-    "initiatives.csv": {"Active", "Complete", "Completed", "On Hold", "At Risk"},
-    "commitments.csv": {"Open", "In Progress", "Completed", "Complete", "Overdue"},
+    "initiatives.csv": {"Active", "Complete", "On Hold", "At Risk"},
+    "commitments.csv": {"Open", "Completed", "Overdue"},
     "dependencies.csv": {"Open", "Resolved"},
     "risks.csv": {"Open", "Monitoring", "Resolved"},
     "knowledge.csv": {"Draft", "Approved", "Archived"},
     "configuration.csv": {"Active", "Inactive"},
 }
 
+STATUS_ALIASES = {
+    "initiatives.csv": {"Completed": "Complete"},
+    "commitments.csv": {"Complete": "Completed", "In Progress": "Open"},
+}
+
 OTHER_ALLOWED_VALUES = {
     "priority": {"Low", "Medium", "High"},
     "severity": {"Low", "Medium", "High"},
     "likelihood": {"Low", "Medium", "High"},
-    "threshold_status": {"Healthy", "Good", "Warning", "Critical"},
+    "threshold_status": {"Healthy", "Good", "Warning", "Critical", "Not Evaluated"},
     "source_authority": {"Working", "Approved", "Official"},
     "escalation_level": {"None", "Manager", "Director"},
 }
@@ -169,17 +178,25 @@ def validate_dates(sample: CsvData, errors: list[str]) -> None:
                 )
 
 
-def validate_statuses(sample: CsvData, errors: list[str]) -> None:
+def validate_statuses(sample: CsvData, errors: list[str], warnings: list[str]) -> None:
     allowed_statuses = STATUS_VALUES.get(sample.path.name)
+    status_aliases = STATUS_ALIASES.get(sample.path.name, {})
     if allowed_statuses and "status" in sample.headers:
         for row_index, row in enumerate(sample.rows):
             value = row.get("status", "")
-            if value and value not in allowed_statuses:
-                allowed = ", ".join(sorted(allowed_statuses))
-                errors.append(
-                    f"{sample.path.name}: {describe_row(row_index)} has invalid status '{value}' "
-                    f"(allowed: {allowed})"
+            if not value or value in allowed_statuses:
+                continue
+            if value in status_aliases:
+                warnings.append(
+                    f"{sample.path.name}: {describe_row(row_index)} uses status alias '{value}' "
+                    f"(normalize to '{status_aliases[value]}' before production load)"
                 )
+                continue
+            allowed = ", ".join(sorted(allowed_statuses))
+            errors.append(
+                f"{sample.path.name}: {describe_row(row_index)} has invalid status '{value}' "
+                f"(allowed: {allowed})"
+            )
 
     for column, allowed_values in OTHER_ALLOWED_VALUES.items():
         if column not in sample.headers:
@@ -220,18 +237,18 @@ def validate_references(
                 )
 
 
-def validate_samples() -> tuple[list[str], list[str]]:
+def validate_directory(input_dir: Path) -> tuple[list[str], list[str]]:
     errors: list[str] = []
     warnings: list[str] = []
 
-    if not SAMPLE_DIR.exists():
-        return [f"Missing sample directory: {SAMPLE_DIR}"], warnings
+    if not input_dir.exists():
+        return [f"Missing input directory: {input_dir}"], warnings
     if not TEMPLATE_DIR.exists():
         return [f"Missing template directory: {TEMPLATE_DIR}"], warnings
 
-    sample_paths = sorted(SAMPLE_DIR.glob("*.csv"))
+    sample_paths = sorted(input_dir.glob("*.csv"))
     if not sample_paths:
-        return [f"No sample CSV files found in {SAMPLE_DIR}"], warnings
+        return [f"No CSV files found in {input_dir}"], warnings
 
     data_by_file = {path.name: read_csv(path) for path in sample_paths}
     program_values, initiative_values = collect_key_values(data_by_file)
@@ -246,15 +263,29 @@ def validate_samples() -> tuple[list[str], list[str]]:
         validate_headers(sample, template_headers, errors, warnings)
         validate_ids(sample, errors)
         validate_dates(sample, errors)
-        validate_statuses(sample, errors)
+        validate_statuses(sample, errors, warnings)
         validate_references(sample, program_values, initiative_values, errors)
 
     return errors, warnings
 
 
-def main() -> int:
-    errors, warnings = validate_samples()
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(description="Validate FCC CSV files against templates and core model rules.")
+    parser.add_argument(
+        "--input-dir",
+        type=Path,
+        default=DEFAULT_INPUT_DIR,
+        help="Directory containing FCC CSV files to validate. Defaults to data/sample.",
+    )
+    return parser.parse_args()
 
+
+def main() -> int:
+    args = parse_args()
+    input_dir = args.input_dir.resolve()
+    errors, warnings = validate_directory(input_dir)
+
+    print(f"Validating FCC CSVs in {input_dir}")
     for warning in warnings:
         print(f"WARNING: {warning}")
 
