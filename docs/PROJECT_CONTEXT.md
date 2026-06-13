@@ -2,359 +2,375 @@
 
 # Fundraising Command Centre (FCC)
 
-## Project Overview
+Version: 2.0
 
-Fundraising Command Centre (FCC) is a Microsoft 365-based fundraising operations system designed to provide executive visibility, operational accountability, campaign readiness monitoring, follow-up discipline, dependency management, and AI-assisted operational intelligence.
+---
 
-FCC is not a CRM.
+# Project Overview
 
-FCC is not a project management system.
+Fundraising Command Centre (FCC) is a Microsoft 365-based operational intelligence platform for fundraising organizations.
 
-FCC is not a reporting platform.
+FCC provides leadership visibility into:
 
-FCC sits above these systems and provides a unified operational view of fundraising execution.
+* execution
+* readiness
+* commitments
+* dependencies
+* risks
+* knowledge
+* operational performance
+
+FCC sits above CRM systems, planning tools, fundraising platforms, and reporting systems.
+
+FCC is designed to answer:
+
+* Are we on track?
+* What is at risk?
+* What is overdue?
+* What is blocked?
+* What requires intervention?
+
+within minutes.
 
 ---
 
 # Design Maturity
 
-This project is currently in the architecture and canonical-model phase.
+The project is currently in the architecture and validation phase.
 
-Many mappings, scoring models, and implementation details remain under development.
+The Canonical Data Model, Mapping Methodology, and Microsoft 365 Architecture have been established but continue to evolve through scenario testing and implementation planning.
 
-Documents represent the current best design and should be expected to evolve through testing and pilot implementations.
+Examples within project documentation are illustrative.
 
-Open questions and assumptions should be documented rather than hidden.
+They are not implementation rules.
+
+Implementation-specific decisions must be documented and approved through the CRM Mapping Workbook.
+
+---
 
 # Vision
 
-Most nonprofits have:
+Most fundraising organizations possess:
 
 * CRM systems
-* Online giving platforms
-* Marketing platforms
-* Project management tools
-* Finance systems
+* fundraising platforms
+* marketing systems
+* project management tools
 * Microsoft 365
-* Reporting tools
+* reporting platforms
 
-However, they lack a system that answers:
+However, they lack a unified operational management layer.
 
-* Are we on track?
-* What is at risk?
-* What needs attention today?
-* What is blocking success?
-* What should leadership focus on this week?
+FCC fills that gap.
 
-FCC is designed to answer those questions.
+FCC provides a common operational framework across fundraising disciplines while allowing each team to continue using its preferred operational systems.
 
 ---
 
 # Product Philosophy
 
-CRM manages donors.
+CRM manages donor relationships.
 
-Project management manages tasks.
+Project management systems manage tasks.
 
 Power BI manages reporting.
 
-FCC manages execution.
+FCC manages operational accountability.
 
 ---
 
-# Initial Platform Strategy
+# Strategic Design Principle
 
-Version 1 is Microsoft 365 based.
+FCC does not attempt to replace:
 
-Primary components:
+* RE NXT
+* Salesforce
+* Planner
+* Asana
+* Smartsheet
+* Project
 
-* SharePoint Lists
-* SharePoint Document Libraries
-* Power Automate
-* Power BI
-* Microsoft Teams
-* Azure OpenAI (optional)
-
-FCC is implemented inside the client's Microsoft 365 tenant.
-
-No standalone SaaS platform will be developed during Phase 1.
+Instead FCC consumes information from these systems and converts it into operational intelligence.
 
 ---
 
 # Universal Work Model
 
-All fundraising disciplines map into the same operational model.
+The FCC Canonical Model is built around six core operational objects.
 
-## Core Objects
+```text
+Program
+Initiative
+Commitment
+Dependency
+Risk
+Knowledge
+```
 
-### Initiative
+Supporting objects:
 
-A fundraising work portfolio.
+```text
+Metric Snapshot
+Configuration
+Alert
+Data Quality Issue
+```
 
-Examples:
+---
 
-* Annual Appeal
-* Capital Campaign
-* Major Gifts Portfolio
-* Gala Event
-* Stewardship Program
-* Monthly Giving Program
+# Program
 
-### Activity
-
-Work required to advance an initiative.
-
-Examples:
-
-* Prospect qualification
-* Create sponsorship package
-* Secure venue
-* Draft proposal
-* Approve segmentation
-
-### Dependency
-
-A relationship where one activity cannot proceed until another activity, decision, deliverable, or approval is completed.
+Programs represent strategic fundraising areas.
 
 Examples:
 
-* Finance approval
-* Legal review
-* Website update
-* Prospect research completion
+* Annual Giving
+* Major Gifts
+* Events
+* Stewardship
+* Corporate Partnerships
 
-### Commitment
+Programs are typically defined by leadership.
 
-An obligation that must be fulfilled.
+Programs are FCC-owned objects.
 
-Examples:
+---
 
-* Donor follow-up
-* Stewardship report
-* Proposal deadline
-* Sponsor benefit delivery
-* Campaign launch date
+# Initiative
 
-### Risk
-
-Anything that may prevent successful execution.
+Initiatives represent managed work portfolios.
 
 Examples:
 
-* Missing approvals
-* Stalled prospects
-* Incomplete readiness items
-* Data quality issues
-* Resource constraints
+Annual Giving
 
-### Knowledge
+* Spring Appeal
+* Giving Tuesday
+* Year-End Appeal
 
-Institutional knowledge required to support operations.
+Major Gifts
+
+* Principal Gifts Portfolio
+* Leadership Gifts Portfolio
+
+Events
+
+* Annual Gala
+* Golf Tournament
+
+Stewardship
+
+* Foundation Reporting Program
+* Impact Reporting Cycle
+
+Initiatives are FCC-owned objects.
+
+---
+
+# Activity Management Principle
+
+Activities are not FCC-owned objects.
+
+Activities remain within their operational systems.
+
+Examples:
+
+Relationship Activities
+
+* donor meetings
+* qualification calls
+* stewardship visits
+* proposal discussions
+
+Sources:
+
+* RE NXT Actions
+* Salesforce Tasks
+
+Operational Activities
+
+* segmentation approval
+* venue coordination
+* website deployment
+* creative review
+
+Sources:
+
+* Planner
+* Asana
+* Smartsheet
+* Microsoft Project
+
+FCC consumes activity information but does not become the system of record for activities.
+
+---
+
+# Commitments
+
+Commitments represent obligations that must be fulfilled.
+
+Examples:
+
+* donor follow-up
+* proposal deadline
+* stewardship report
+* campaign launch milestone
+* sponsor benefit delivery
+
+Commitments are a primary FCC-managed object.
+
+---
+
+# Dependencies
+
+Dependencies represent blockers and prerequisites.
+
+Examples:
+
+* finance approval
+* legal review
+* CEO briefing
+* website deployment
+* prospect research
+
+Dependencies are a primary FCC-managed object.
+
+---
+
+# Risks
+
+Risks represent conditions that threaten successful execution.
+
+Examples:
+
+* stalled opportunities
+* overdue commitments
+* missing approvals
+* resource constraints
+* data quality issues
+
+Risks are a primary FCC-managed object.
+
+---
+
+# Knowledge
+
+Knowledge preserves institutional memory.
 
 Examples:
 
 * SOPs
-* Playbooks
-* Policies
-* Templates
-* Decision logs
-* Post-mortems
-* Lessons learned
+* policies
+* playbooks
+* templates
+* lessons learned
+* post-mortems
 
----
-# Activity Management Principle
-
-FCC is not intended to replace CRM actions, task management systems, or project management tools.
-
-Fundraising teams already manage activities within operational systems such as:
-
-* RE NXT Actions
-* Salesforce Tasks
-* Planner Tasks
-* Asana Tasks
-* Smartsheet Tasks
-* Project Plans
-
-FCC consumes activity information from source systems and converts it into operational insights.
-
-Examples:
-
-Major Gifts
-
-* Actions remain in RE NXT.
-* FCC monitors follow-up compliance, pipeline health, and stalled opportunities.
-
-Stewardship
-
-* Reporting activities remain in RE NXT, Planner, or SharePoint workflows.
-* FCC monitors commitment completion and overdue obligations.
-
-Direct Response
-
-* Activities remain in Planner, Asana, Smartsheet, or Project.
-* FCC monitors readiness, dependencies, and launch risk.
-
-Events
-
-* Activities remain in project management tools.
-* FCC monitors readiness, dependencies, sponsor commitments, and operational risks.
-
-FCC is therefore an operational oversight platform rather than a task management platform.
-
-# Core User Interfaces
-
-## Executive Control Tower
-
-Provides leadership visibility into:
-
-* Readiness
-* Risks
-* Commitments
-* Dependencies
-* Forecasts
-* Follow-up compliance
-
-## Work Portfolio
-
-Provides team-specific operational views.
-
-Examples:
-
-* Appeals
-* Events
-* Major Gifts
-* Stewardship
-
-## Readiness & Execution
-
-Tracks readiness items and execution status.
-
-## Dependencies & Risks
-
-Tracks blockers and operational risks.
-
-## Commitments & Follow-Up
-
-Tracks accountability and obligation completion.
-
-## Knowledgebase
-
-Provides operational knowledge and AI-assisted retrieval.
+Knowledge is a primary FCC-managed object.
 
 ---
 
-# Microsoft 365 Architecture
+# Mapping Philosophy
 
-## SharePoint Lists
+The Canonical Model is stable.
 
-Primary operational store.
+Mappings are variable.
 
-Planned Lists:
+No source-system object has a guaranteed one-to-one relationship with a canonical FCC object.
 
+Examples:
+
+RE NXT Opportunity
+
+may map to:
+
+* Commitment
+* Initiative
+* Both
+
+depending on organizational practices.
+
+All mappings must be documented through:
+
+CRM_MAPPING_WORKBOOK.md
+
+---
+
+# Primary Platform
+
+Version 1 implementation uses Microsoft 365.
+
+Core technologies:
+
+* SharePoint Lists
+* SharePoint Document Libraries
+* Power Automate
+* Power BI
+* Teams
+
+Optional:
+
+* Azure OpenAI
+* Copilot
+* Copilot Studio
+
+---
+
+# SharePoint Architecture
+
+FCC owns:
+
+* Programs
 * Initiatives
-* Activities
-* Dependencies
 * Commitments
+* Dependencies
 * Risks
-* Knowledge
+* Knowledge Metadata
 * Metric Snapshots
 * Configuration
 
-## SharePoint Document Library
+FCC does not own:
 
-Stores imported CRM extracts.
+* CRM Actions
+* Planner Tasks
+* Project Plans
 
-Examples:
+---
 
-* RE NXT exports
-* Salesforce exports
-* Planning tool exports
+# Power BI Architecture
 
-## Power Automate
+Power BI serves as the primary user interface for FCC.
 
-Provides:
+Primary pages:
 
-* Readiness scoring
-* SLA monitoring
-* Alert generation
-* Snapshot creation
-* Data validation
+* Executive Control Tower
+* Work Portfolio
+* Readiness & Execution
+* Dependencies & Risks
+* Commitments & Follow-Up
+* Knowledgebase
 
-## Power BI
-
-Provides:
-
-* Executive dashboards
-* Operational dashboards
-* Trend reporting
-* Risk reporting
-* Readiness reporting
-
-## Teams
-
-Provides:
-
-* Weekly operational reviews
-* Alert delivery
-* Executive digests
-* Team collaboration
+Power BI is designed around management questions rather than source-system tables.
 
 ---
 
 # CRM Strategy
 
-FCC does not replace CRM systems.
-
-CRM remains the source of donor truth.
-
-Initial target CRM:
+Initial target:
 
 * Raiser's Edge NXT
 
-Future support:
+Future targets:
 
 * Salesforce Nonprofit Cloud
 * Salesforce NPSP
 * DonorPerfect
 * Keela
 
----
+CRM remains the source of donor truth.
 
-# Source System Mapping Layer
+FCC remains the source of operational intelligence.
 
-A mapping layer translates source-system objects into the FCC Canonical Model.
-
-Example:
-
-RE NXT Opportunity
-→ Commitment
-
-RE NXT Action
-→ Activity
-
-RE NXT Portfolio Assignment
-→ Initiative
-
-RE NXT Pledge
-→ Commitment
-
-RE NXT Stalled Opportunity
-→ Risk
-
-Planner Task
-→ Activity
-
-Blocked Planner Task
-→ Dependency
-
-SharePoint SOP
-→ Knowledge
-
-The canonical model is stable.
-
-CRM mappings are implementation-specific.
-
-No source-system object has a guaranteed one-to-one relationship with a canonical object.
 ---
 
 # Data Principles
@@ -363,19 +379,18 @@ FCC minimizes donor PII.
 
 Store:
 
-* Source system
-* Source record ID
-* Assigned fundraiser
-* Stage
-* Dates
-* Metrics
-* Operational status
+* source system
+* source record ID
+* owner
+* dates
+* statuses
+* metrics
 
 Avoid:
 
-* Detailed donor notes
-* Contact information
-* Sensitive financial information
+* detailed donor notes
+* contact information
+* unnecessary donor data
 
 ---
 
@@ -383,69 +398,74 @@ Avoid:
 
 AI assists with interpretation.
 
-AI does not calculate metrics.
-
 AI does not become the source of truth.
 
-AI receives precomputed metrics and operational summaries.
+AI receives:
 
-Outputs:
+* Metric Snapshots
+* Risks
+* Dependencies
+* Commitments
 
-* Weekly digest
-* Executive briefing
-* Risk narrative
-* Readiness summary
-* Board-report content
+AI outputs:
+
+* executive summaries
+* readiness summaries
+* risk narratives
+* weekly digests
+
+AI should not calculate KPIs from raw records.
 
 ---
 
-# Current MVP Scope
+# MVP Scope
 
-Phase 1:
+Included:
 
 * SharePoint Lists
+* SharePoint Libraries
 * CSV ingestion
-* RE NXT mapping
+* RE NXT reference implementation
 * Power Automate rules
 * Power BI dashboards
-* Teams review process
-* AI executive summaries
+* Teams integration
+* AI summaries
 
 Excluded:
 
-* Live CRM write-back
-* Full SaaS platform
-* Multi-CRM support
-* Copilot Studio implementation
-* Advanced predictive modeling
+* live CRM write-back
+* SaaS platform
+* multi-CRM framework
+* predictive analytics
+* Dataverse implementation
 
 ---
 
-# Success Criteria
+# Definition of Success
 
-The platform succeeds when leadership can answer:
+FCC succeeds when fundraising leadership can answer:
 
 * What is at risk?
 * What is overdue?
 * What is blocked?
-* What needs attention this week?
+* What requires intervention?
 
-within five minutes of opening the Command Centre.
+within five minutes of opening the Executive Control Tower.
 
 ---
 
 # Repository Structure
 
 /docs
-PROJECT_CONTEXT.md
-CANONICAL_DATA_MODEL.md
-CRM_MAPPING_WORKBOOK.md
-MS365_ARCHITECTURE.md
-ROADMAP.md
 
-/data
-/scripts
-/powerbi
-/flows
+* PROJECT_CONTEXT.md
+* CANONICAL_DATA_MODEL.md
+* CRM_MAPPING_WORKBOOK.md
+* MS365_ARCHITECTURE.md
+* SHAREPOINT_LISTS_DESIGN.md
+* POWER_BI_SEMANTIC_MODEL.md
+* ROADMAP.md
+* RE_NXT_REFERENCE_IMPLEMENTATION.md
+* MVP_SCENARIO_VALIDATION.md
 
-PROJECT_CONTEXT.md is the authoritative source document that all future architecture, coding, Power BI, Power Automate, and AI work must reference.
+This document serves as the authoritative project overview and should be reviewed before making architectural, implementation, or product decisions.
