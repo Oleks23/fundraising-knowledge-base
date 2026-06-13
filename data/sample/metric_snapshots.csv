@@ -3,11 +3,15 @@ SNP-AG-2026-06-14-OPEN-COMMITMENTS,2026-06-14,INI-AG-SPRING,open_commitments_cou
 SNP-AG-2026-06-14-OVERDUE-COMMITMENTS,2026-06-14,INI-AG-SPRING,overdue_commitments_count,2,Count,Critical,Power Automate,Simple count of FCC commitments with overdue status.
 SNP-AG-2026-06-14-OPEN-DEPENDENCIES,2026-06-14,INI-AG-SPRING,open_dependencies_count,2,Count,Critical,Power Automate,Simple count of open FCC dependencies.
 SNP-AG-2026-06-14-HIGH-RISKS,2026-06-14,INI-AG-SPRING,high_risks_count,1,Count,Warning,Power Automate,Simple count of open high-severity FCC risks.
-SNP-AG-2026-06-14-COMMITMENT-COMPLIANCE,2026-06-14,INI-AG-SPRING,commitment_compliance_placeholder,,Percent,Not Evaluated,Power Automate,Placeholder/config_input only. No commitment compliance formula is calculated in Sprint 1.
-SNP-AG-2026-06-14-FOLLOWUP-COMPLIANCE,2026-06-14,INI-AG-SPRING,follow_up_compliance_placeholder,,Percent,Not Evaluated,Power Automate,Placeholder/config_input only. RE NXT Actions remain source activity data.
+SNP-AG-2026-06-14-COMMITMENT-COMPLIANCE,2026-06-14,INI-AG-SPRING,commitment_compliance,0.60,Percent,Not Evaluated,Power Automate,Placeholder/config_input only. MVP uses imported value; no weighted compliance formula is calculated.
+SNP-AG-2026-06-14-FOLLOWUP-COMPLIANCE,2026-06-14,INI-AG-SPRING,follow_up_compliance,0.68,Percent,Not Evaluated,Power Automate,Placeholder/config_input only. RE NXT Actions remain source activity data.
+SNP-AG-2026-06-14-READINESS-SCORE,2026-06-14,INI-AG-SPRING,readiness_score_placeholder,72,Score,Not Evaluated,Power Automate,Placeholder/config_input only. Imported Initiative score; no readiness formula is calculated.
+SNP-AG-2026-06-14-RISK-SCORE,2026-06-14,INI-AG-SPRING,risk_score_placeholder,38,Score,Not Evaluated,Power Automate,Placeholder/config_input only. Imported Initiative score; no risk formula is calculated.
 SNP-MG-2026-06-14-OPEN-COMMITMENTS,2026-06-14,INI-MG-PGP,open_commitments_count,3,Count,Critical,Power Automate,Simple count of FCC commitments that are not completed.
 SNP-MG-2026-06-14-OVERDUE-COMMITMENTS,2026-06-14,INI-MG-PGP,overdue_commitments_count,1,Count,Warning,Power Automate,Simple count of FCC commitments with overdue status.
 SNP-MG-2026-06-14-OPEN-DEPENDENCIES,2026-06-14,INI-MG-PGP,open_dependencies_count,2,Count,Critical,Power Automate,Simple count of open FCC dependencies.
 SNP-MG-2026-06-14-HIGH-RISKS,2026-06-14,INI-MG-PGP,high_risks_count,2,Count,Critical,Power Automate,Simple count of open high-severity FCC risks.
-SNP-MG-2026-06-14-COMMITMENT-COMPLIANCE,2026-06-14,INI-MG-PGP,commitment_compliance_placeholder,,Percent,Not Evaluated,Power Automate,Placeholder/config_input only. No commitment compliance formula is calculated in Sprint 1.
-SNP-MG-2026-06-14-FOLLOWUP-COMPLIANCE,2026-06-14,INI-MG-PGP,follow_up_compliance_placeholder,,Percent,Not Evaluated,Power Automate,Placeholder/config_input only. RE NXT Actions remain source activity data.
+SNP-MG-2026-06-14-COMMITMENT-COMPLIANCE,2026-06-14,INI-MG-PGP,commitment_compliance,0.75,Percent,Not Evaluated,Power Automate,Placeholder/config_input only. MVP uses imported value; no weighted compliance formula is calculated.
+SNP-MG-2026-06-14-FOLLOWUP-COMPLIANCE,2026-06-14,INI-MG-PGP,follow_up_compliance,0.58,Percent,Not Evaluated,Power Automate,Placeholder/config_input only. RE NXT Actions remain source activity data.
+SNP-MG-2026-06-14-READINESS-SCORE,2026-06-14,INI-MG-PGP,readiness_score_placeholder,61,Score,Not Evaluated,Power Automate,Placeholder/config_input only. Imported Initiative score; no readiness formula is calculated.
+SNP-MG-2026-06-14-RISK-SCORE,2026-06-14,INI-MG-PGP,risk_score_placeholder,67,Score,Not Evaluated,Power Automate,Placeholder/config_input only. Imported Initiative score; no risk formula is calculated.
