@@ -1,0 +1,258 @@
+// Fundraising Command Centre (FCC) MVP core measures
+// Assumptions:
+// - These measures use the Sprint 2 base table names from powerbi/m/*.pq.
+// - Natural ID relationships are assumed for the MVP model.
+// - Activities are intentionally excluded from the core semantic model.
+// - readiness_score and risk_score are imported Initiative inputs only.
+// - Metric snapshot measures read imported snapshot rows; they do not calculate readiness or compliance.
+// - Knowledge status is not mixed into operational status measures.
+
+// -----------------------------------------------------------------------------
+// Commitments
+// -----------------------------------------------------------------------------
+
+Open Commitments =
+CALCULATE (
+    COUNTROWS ( Commitments ),
+    FILTER (
+        Commitments,
+        NOT ( Commitments[status] IN { "Completed", "Complete" } )
+    )
+)
+
+Completed Commitments =
+CALCULATE (
+    COUNTROWS ( Commitments ),
+    Commitments[status] IN { "Completed", "Complete" }
+)
+
+Overdue Commitments =
+CALCULATE (
+    COUNTROWS ( Commitments ),
+    FILTER (
+        Commitments,
+        Commitments[due_date] < TODAY ()
+            && NOT ( Commitments[status] IN { "Completed", "Complete" } )
+    )
+)
+
+Commitments Due Next 7 Days =
+CALCULATE (
+    COUNTROWS ( Commitments ),
+    FILTER (
+        Commitments,
+        Commitments[due_date] >= TODAY ()
+            && Commitments[due_date] <= TODAY () + 7
+            && NOT ( Commitments[status] IN { "Completed", "Complete" } )
+    )
+)
+
+Commitment Completion Rate =
+DIVIDE (
+    [Completed Commitments],
+    COUNTROWS ( Commitments )
+)
+
+// -----------------------------------------------------------------------------
+// Dependencies
+// -----------------------------------------------------------------------------
+
+Open Dependencies =
+CALCULATE (
+    COUNTROWS ( Dependencies ),
+    FILTER (
+        Dependencies,
+        NOT ( Dependencies[status] IN { "Resolved" } )
+    )
+)
+
+Resolved Dependencies =
+CALCULATE (
+    COUNTROWS ( Dependencies ),
+    Dependencies[status] = "Resolved"
+)
+
+Overdue Dependencies =
+CALCULATE (
+    COUNTROWS ( Dependencies ),
+    FILTER (
+        Dependencies,
+        Dependencies[due_date] < TODAY ()
+            && NOT ( Dependencies[status] IN { "Resolved" } )
+    )
+)
+
+High Severity Dependencies =
+CALCULATE (
+    COUNTROWS ( Dependencies ),
+    FILTER (
+        Dependencies,
+        Dependencies[severity] = "High"
+            && NOT ( Dependencies[status] IN { "Resolved" } )
+    )
+)
+
+// -----------------------------------------------------------------------------
+// Risks
+// -----------------------------------------------------------------------------
+
+Open Risks =
+CALCULATE (
+    COUNTROWS ( Risks ),
+    FILTER (
+        Risks,
+        NOT ( Risks[status] IN { "Resolved" } )
+    )
+)
+
+High Risks =
+CALCULATE (
+    COUNTROWS ( Risks ),
+    FILTER (
+        Risks,
+        Risks[severity] = "High"
+            && NOT ( Risks[status] IN { "Resolved" } )
+    )
+)
+
+Critical Risks =
+CALCULATE (
+    COUNTROWS ( Risks ),
+    FILTER (
+        Risks,
+        Risks[severity] = "Critical"
+            && NOT ( Risks[status] IN { "Resolved" } )
+    )
+)
+
+Resolved Risks =
+CALCULATE (
+    COUNTROWS ( Risks ),
+    Risks[status] = "Resolved"
+)
+
+Initiatives At Risk =
+CALCULATE (
+    DISTINCTCOUNT ( Risks[initiative] ),
+    FILTER (
+        Risks,
+        Risks[severity] IN { "High", "Critical" }
+            && NOT ( Risks[status] IN { "Resolved" } )
+    )
+)
+
+// -----------------------------------------------------------------------------
+// Metric Snapshots
+// -----------------------------------------------------------------------------
+
+Latest Snapshot Date =
+MAX ( MetricSnapshots[snapshot_date] )
+
+Latest Metric Value =
+VAR LatestDate = [Latest Snapshot Date]
+RETURN
+    CALCULATE (
+        MAX ( MetricSnapshots[metric_value] ),
+        MetricSnapshots[snapshot_date] = LatestDate
+    )
+
+Follow-Up Compliance Latest =
+VAR LatestDate =
+    CALCULATE (
+        MAX ( MetricSnapshots[snapshot_date] ),
+        FILTER (
+            ALL ( MetricSnapshots[metric_name] ),
+            MetricSnapshots[metric_name] IN { "follow_up_compliance_placeholder", "follow_up_compliance" }
+        )
+    )
+RETURN
+    CALCULATE (
+        MAX ( MetricSnapshots[metric_value] ),
+        FILTER (
+            ALL ( MetricSnapshots[metric_name] ),
+            MetricSnapshots[metric_name] IN { "follow_up_compliance_placeholder", "follow_up_compliance" }
+        ),
+        MetricSnapshots[snapshot_date] = LatestDate
+    )
+
+Commitment Compliance Latest =
+VAR LatestDate =
+    CALCULATE (
+        MAX ( MetricSnapshots[snapshot_date] ),
+        FILTER (
+            ALL ( MetricSnapshots[metric_name] ),
+            MetricSnapshots[metric_name] IN { "commitment_compliance_placeholder", "commitment_compliance" }
+        )
+    )
+RETURN
+    CALCULATE (
+        MAX ( MetricSnapshots[metric_value] ),
+        FILTER (
+            ALL ( MetricSnapshots[metric_name] ),
+            MetricSnapshots[metric_name] IN { "commitment_compliance_placeholder", "commitment_compliance" }
+        ),
+        MetricSnapshots[snapshot_date] = LatestDate
+    )
+
+Open Risks Latest =
+VAR LatestDate =
+    CALCULATE (
+        MAX ( MetricSnapshots[snapshot_date] ),
+        FILTER (
+            ALL ( MetricSnapshots[metric_name] ),
+            MetricSnapshots[metric_name] = "open_risks_count"
+        )
+    )
+RETURN
+    CALCULATE (
+        MAX ( MetricSnapshots[metric_value] ),
+        FILTER (
+            ALL ( MetricSnapshots[metric_name] ),
+            MetricSnapshots[metric_name] = "open_risks_count"
+        ),
+        MetricSnapshots[snapshot_date] = LatestDate
+    )
+
+Open Commitments Latest =
+VAR LatestDate =
+    CALCULATE (
+        MAX ( MetricSnapshots[snapshot_date] ),
+        FILTER (
+            ALL ( MetricSnapshots[metric_name] ),
+            MetricSnapshots[metric_name] = "open_commitments_count"
+        )
+    )
+RETURN
+    CALCULATE (
+        MAX ( MetricSnapshots[metric_value] ),
+        FILTER (
+            ALL ( MetricSnapshots[metric_name] ),
+            MetricSnapshots[metric_name] = "open_commitments_count"
+        ),
+        MetricSnapshots[snapshot_date] = LatestDate
+    )
+
+// -----------------------------------------------------------------------------
+// Initiatives
+// -----------------------------------------------------------------------------
+
+Active Initiatives =
+CALCULATE (
+    COUNTROWS ( Initiatives ),
+    FILTER (
+        Initiatives,
+        NOT ( Initiatives[status] IN { "Completed", "Complete", "Closed" } )
+    )
+)
+
+Completed Initiatives =
+CALCULATE (
+    COUNTROWS ( Initiatives ),
+    Initiatives[status] IN { "Completed", "Complete" }
+)
+
+Average Readiness Score =
+AVERAGE ( Initiatives[readiness_score] )
+
+Average Risk Score =
+AVERAGE ( Initiatives[risk_score] )
