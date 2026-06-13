@@ -5,6 +5,8 @@
 // - Activities are intentionally excluded from the core semantic model.
 // - readiness_score and risk_score are imported Initiative inputs only.
 // - Metric snapshot measures read imported snapshot rows; they do not calculate readiness or compliance.
+// - Count snapshot metrics sum across visible Initiatives at the latest snapshot date.
+// - Placeholder compliance metrics use simple averages until numerator/denominator fields exist.
 // - Knowledge status is not mixed into operational status measures.
 
 // -----------------------------------------------------------------------------
@@ -148,88 +150,132 @@ CALCULATE (
 Latest Snapshot Date =
 MAX ( MetricSnapshots[snapshot_date] )
 
-Latest Metric Value =
-VAR LatestDate = [Latest Snapshot Date]
-RETURN
-    CALCULATE (
-        MAX ( MetricSnapshots[metric_value] ),
-        MetricSnapshots[snapshot_date] = LatestDate
-    )
-
-Follow-Up Compliance Latest =
-VAR LatestDate =
-    CALCULATE (
-        MAX ( MetricSnapshots[snapshot_date] ),
-        FILTER (
-            ALL ( MetricSnapshots[metric_name] ),
-            MetricSnapshots[metric_name] IN { "follow_up_compliance_placeholder", "follow_up_compliance" }
-        )
-    )
-RETURN
-    CALCULATE (
-        MAX ( MetricSnapshots[metric_value] ),
-        FILTER (
-            ALL ( MetricSnapshots[metric_name] ),
-            MetricSnapshots[metric_name] IN { "follow_up_compliance_placeholder", "follow_up_compliance" }
-        ),
-        MetricSnapshots[snapshot_date] = LatestDate
-    )
-
-Commitment Compliance Latest =
-VAR LatestDate =
-    CALCULATE (
-        MAX ( MetricSnapshots[snapshot_date] ),
-        FILTER (
-            ALL ( MetricSnapshots[metric_name] ),
-            MetricSnapshots[metric_name] IN { "commitment_compliance_placeholder", "commitment_compliance" }
-        )
-    )
-RETURN
-    CALCULATE (
-        MAX ( MetricSnapshots[metric_value] ),
-        FILTER (
-            ALL ( MetricSnapshots[metric_name] ),
-            MetricSnapshots[metric_name] IN { "commitment_compliance_placeholder", "commitment_compliance" }
-        ),
-        MetricSnapshots[snapshot_date] = LatestDate
-    )
-
-Open Risks Latest =
-VAR LatestDate =
-    CALCULATE (
-        MAX ( MetricSnapshots[snapshot_date] ),
-        FILTER (
-            ALL ( MetricSnapshots[metric_name] ),
-            MetricSnapshots[metric_name] = "open_risks_count"
-        )
-    )
-RETURN
-    CALCULATE (
-        MAX ( MetricSnapshots[metric_value] ),
-        FILTER (
-            ALL ( MetricSnapshots[metric_name] ),
-            MetricSnapshots[metric_name] = "open_risks_count"
-        ),
-        MetricSnapshots[snapshot_date] = LatestDate
-    )
-
 Open Commitments Latest =
 VAR LatestDate =
     CALCULATE (
         MAX ( MetricSnapshots[snapshot_date] ),
-        FILTER (
-            ALL ( MetricSnapshots[metric_name] ),
-            MetricSnapshots[metric_name] = "open_commitments_count"
-        )
+        ALL ( MetricSnapshots[metric_name] ),
+        MetricSnapshots[metric_name] = "open_commitments_count"
     )
 RETURN
     CALCULATE (
-        MAX ( MetricSnapshots[metric_value] ),
-        FILTER (
-            ALL ( MetricSnapshots[metric_name] ),
-            MetricSnapshots[metric_name] = "open_commitments_count"
-        ),
+        SUM ( MetricSnapshots[metric_value] ),
+        ALL ( MetricSnapshots[metric_name] ),
+        MetricSnapshots[metric_name] = "open_commitments_count",
         MetricSnapshots[snapshot_date] = LatestDate
+    )
+
+Overdue Commitments Latest =
+VAR LatestDate =
+    CALCULATE (
+        MAX ( MetricSnapshots[snapshot_date] ),
+        ALL ( MetricSnapshots[metric_name] ),
+        MetricSnapshots[metric_name] = "overdue_commitments_count"
+    )
+RETURN
+    CALCULATE (
+        SUM ( MetricSnapshots[metric_value] ),
+        ALL ( MetricSnapshots[metric_name] ),
+        MetricSnapshots[metric_name] = "overdue_commitments_count",
+        MetricSnapshots[snapshot_date] = LatestDate
+    )
+
+Open Dependencies Latest =
+VAR LatestDate =
+    CALCULATE (
+        MAX ( MetricSnapshots[snapshot_date] ),
+        ALL ( MetricSnapshots[metric_name] ),
+        MetricSnapshots[metric_name] = "open_dependencies_count"
+    )
+RETURN
+    CALCULATE (
+        SUM ( MetricSnapshots[metric_value] ),
+        ALL ( MetricSnapshots[metric_name] ),
+        MetricSnapshots[metric_name] = "open_dependencies_count",
+        MetricSnapshots[snapshot_date] = LatestDate
+    )
+
+High Risks Latest =
+VAR LatestDate =
+    CALCULATE (
+        MAX ( MetricSnapshots[snapshot_date] ),
+        ALL ( MetricSnapshots[metric_name] ),
+        MetricSnapshots[metric_name] = "high_risks_count"
+    )
+RETURN
+    CALCULATE (
+        SUM ( MetricSnapshots[metric_value] ),
+        ALL ( MetricSnapshots[metric_name] ),
+        MetricSnapshots[metric_name] = "high_risks_count",
+        MetricSnapshots[snapshot_date] = LatestDate
+    )
+
+Follow-Up Compliance Placeholder Latest =
+VAR LatestDate =
+    CALCULATE (
+        MAX ( MetricSnapshots[snapshot_date] ),
+        ALL ( MetricSnapshots[metric_name] ),
+        MetricSnapshots[metric_name] = "follow_up_compliance"
+    )
+RETURN
+    CALCULATE (
+        AVERAGE ( MetricSnapshots[metric_value] ),
+        ALL ( MetricSnapshots[metric_name] ),
+        MetricSnapshots[metric_name] = "follow_up_compliance",
+        MetricSnapshots[snapshot_date] = LatestDate
+    )
+
+Commitment Compliance Placeholder Latest =
+VAR LatestDate =
+    CALCULATE (
+        MAX ( MetricSnapshots[snapshot_date] ),
+        ALL ( MetricSnapshots[metric_name] ),
+        MetricSnapshots[metric_name] = "commitment_compliance"
+    )
+RETURN
+    CALCULATE (
+        AVERAGE ( MetricSnapshots[metric_value] ),
+        ALL ( MetricSnapshots[metric_name] ),
+        MetricSnapshots[metric_name] = "commitment_compliance",
+        MetricSnapshots[snapshot_date] = LatestDate
+    )
+
+Readiness Score Placeholder Latest =
+VAR LatestDate =
+    CALCULATE (
+        MAX ( MetricSnapshots[snapshot_date] ),
+        ALL ( MetricSnapshots[metric_name] ),
+        MetricSnapshots[metric_name] = "readiness_score_placeholder"
+    )
+RETURN
+    IF (
+        HASONEVALUE ( Initiatives[initiative_id] ),
+        CALCULATE (
+            MAX ( MetricSnapshots[metric_value] ),
+            ALL ( MetricSnapshots[metric_name] ),
+            MetricSnapshots[metric_name] = "readiness_score_placeholder",
+            MetricSnapshots[snapshot_date] = LatestDate
+        ),
+        BLANK ()
+    )
+
+Risk Score Placeholder Latest =
+VAR LatestDate =
+    CALCULATE (
+        MAX ( MetricSnapshots[snapshot_date] ),
+        ALL ( MetricSnapshots[metric_name] ),
+        MetricSnapshots[metric_name] = "risk_score_placeholder"
+    )
+RETURN
+    IF (
+        HASONEVALUE ( Initiatives[initiative_id] ),
+        CALCULATE (
+            MAX ( MetricSnapshots[metric_value] ),
+            ALL ( MetricSnapshots[metric_name] ),
+            MetricSnapshots[metric_name] = "risk_score_placeholder",
+            MetricSnapshots[snapshot_date] = LatestDate
+        ),
+        BLANK ()
     )
 
 // -----------------------------------------------------------------------------
