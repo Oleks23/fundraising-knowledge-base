@@ -72,9 +72,10 @@ The Mapping Workbook is therefore a required implementation artifact.
 
 # Canonical Object Overview
 
-FCC is built around six operational objects:
+FCC is built around seven operational objects:
 
 ```text
+Programs
 Initiatives
 Activities
 Dependencies
@@ -93,6 +94,69 @@ Data Quality Issues
 ```
 
 ---
+# Program / Initiative Hierarchy
+
+FCC supports a hierarchy:
+
+Program → Initiative → Activity
+
+## Program
+
+A Program is a higher-level fundraising area or campaign grouping.
+
+Examples:
+
+- Annual Giving
+- Major Gifts
+- Events
+- Corporate Giving
+- Stewardship
+- Capital Campaign
+- FY2027 Direct Marketing Campaign
+
+Programs are useful for executive grouping, portfolio reporting, and strategic oversight.
+
+## Initiative
+
+An Initiative is the actual managed work object.
+
+Examples:
+
+- Spring Appeal
+- Year-End Appeal
+- Annual Gala
+- Principal Gifts Portfolio
+- Monthly Donor Upgrade Campaign
+- Foundation Stewardship Reporting Cycle
+
+In many cases, the Initiative is the object that has readiness, commitments, dependencies, risks, and activities.
+
+## Activity
+
+An Activity is a specific unit of work required to execute the Initiative.
+
+Examples:
+
+- Approve segmentation
+- Finalize creative
+- Confirm finance coding
+- Conduct donor meeting
+- Prepare proposal
+- Deliver impact report
+
+## Important Mapping Note
+
+Source-system terms such as Campaign, Appeal, Fund, Opportunity, Portfolio, and Event should not be mapped mechanically.
+
+For example, in RE NXT:
+
+- Campaign may map to Program
+- Appeal may map to Initiative
+- Opportunity may map to Commitment or Initiative depending on client usage
+- Fund may map to Initiative Attribute or Financial Designation
+- Action may map to Activity
+
+Mappings must be confirmed in CRM_MAPPING_WORKBOOK.md.
 
 # 1. Initiative
 
